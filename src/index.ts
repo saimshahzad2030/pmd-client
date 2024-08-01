@@ -17,12 +17,13 @@ app.use(
 // const port = 3000;
 const port = process.env.PORT || 3000; 
 app.get('/', async (req: Request, res: Response) => {
-    try {
-      const users = await prisma.user.findMany();
-      res.json({ users, message: 'Fetched successfully' });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+    // try {
+    //   const users = await prisma.user.findMany();
+    //   res.json({ users, message: 'Fetched successfully' });
+    // } catch (error) {
+    //   res.status(500).json({ error: 'Internal Server Error' });
+    // }
+    res.json({message:"sdsad"})
   });
  
 app.listen(port, () => {

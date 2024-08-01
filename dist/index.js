@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const db_1 = __importDefault(require("./db/db"));
 // import router from './routes/user.routes';
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
@@ -29,13 +28,13 @@ app.use(body_parser_1.default.json({
 // const port = 3000;
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const users = yield db_1.default.user.findMany();
-        res.json({ users, message: 'Fetched successfully' });
-    }
-    catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    // try {
+    //   const users = await prisma.user.findMany();
+    //   res.json({ users, message: 'Fetched successfully' });
+    // } catch (error) {
+    //   res.status(500).json({ error: 'Internal Server Error' });
+    // }
+    res.json({ message: "sdsad" });
 }));
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
