@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'; 
-// import prisma from './db/db' 
+import prisma from './db/db' 
 // import router from './routes/user.routes';
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -16,14 +16,14 @@ app.use(
 // app.use("/api", router);
 // const port = 3000;
 const port = process.env.PORT || 3000; 
-// app.get('/', async (req: Request, res: Response) => {
-//     try {
-//       const users = await prisma.user.findMany();
-//       res.json({ users, message: 'Fetched successfully' });
-//     } catch (error) {
-//       res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   });
+app.get('/', async (req: Request, res: Response) => {
+    try {
+      const users = await prisma.user.findMany();
+      res.json({ users, message: 'Fetched successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
  
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
