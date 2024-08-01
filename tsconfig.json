@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src"                           /* Skip type checking all .d.ts files. */
+    "rootDir": "./src"                         
   },
 
   "typeRoots": ["./node_modules/@types", "./custom.d.ts"],
