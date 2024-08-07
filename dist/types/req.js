@@ -1,18 +1,12 @@
-// import { changePassword, emailVerification } from '../controllers/user.controller';
-// export type userCreation = {
-//     firstname: string
-//   lastname: string
-//   email: string
-//   password: string
-// }
-// export type userLogin = { 
-// email: string
-// password: string
-// }
-// export type changePasswordType = {  
-//   password: string
-//   }
-//   export type emailVerificationType = {  
-//     email: string
-//     }
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MetalType = void 0;
+var MetalType;
+(function (MetalType) {
+    MetalType["gold"] = "gold";
+    MetalType["silver"] = "silver";
+    MetalType["platinum"] = "platinum";
+    MetalType["palladium"] = "palladium";
+    MetalType["rare"] = "rare";
+})(MetalType || (exports.MetalType = MetalType = {}));
 //# sourceMappingURL=req.js.map

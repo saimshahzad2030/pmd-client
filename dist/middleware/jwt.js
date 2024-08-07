@@ -1,71 +1,122 @@
-//  import { Request,Response,NextFunction } from "express";
-// // import {JwtPayload} from "jsonwebtoken"; 
-// import jwt, { JwtPayload } from 'jsonwebtoken'
-// // import config from "../config";
-// import prisma from "../db/db";
-// const jwtConfig = { 
-//   sign(payload:object): string  {
-//     const token = jwt.sign(payload, process.env.JWT_SECRET_KEY  as string);
-//     console.log('token',token)
-//     return token;
-//   },
-//   verifyUser(req:Request, res:Response, next:NextFunction) {
-//     const authHeader = req?.headers?.authorization;
-//     try {
-//       if (authHeader) {
-//         const [bearer, token] = authHeader.split(" ");
-//         jwt.verify(token,  process.env.JWT_SECRET_KEY   as string, async(err:any, decoded:any)=> {
-//           if (err) {
-//             res.status(401).json({ message: "You are not authorized" });
-//           } else {
-//             // req.user = decoded as JwtPayload | object;
-//             const user = await prisma.user.findFirst({
-//               where:{
-//                 token:token
-//               }
-//             })
-//             res.locals.user = user
-//             // req.user = decoded
-//             next();
-//           }
-//         });
-//       } else {
-//         res.status(401).json({ message: "You are not authorized" });
-//       }
-//     } catch (error) {
-//       // console.log(err);
-//       res.status(520).send(error);
-//     }
-//   } ,
-//   // async verifyAdmin(req, res, next) {
-//   //   const authHeader = req.headers.authorization;
-//   //   try {
-//   //     if (authHeader) {
-//   //       const [bearer, token] = authHeader.split(" ");
-//   //       // const decoded = await userModel.find({ email: token.user.email });
-//   //       jwt.verify(token, JWT_SECRET_KEY, async function (err, decoded) {
-//   //         await supabase
-//   //           .from("Users")
-//   //           .select("*")
-//   //           .eq("email", decoded?.user?.email);
-//   //         if (err) {
-//   //           res.status(401).json({ message: "You are not authorized" });
-//   //         } else if (decoded.user.role !== "admin") {
-//   //           console.log(decoded.newUser.role);
-//   //           res.status(401).json({ message: "You are not authorized" });
-//   //         } else {
-//   //           req.user = decoded;
-//   //           console.log("authorized");
-//   //           next();
-//   //         }
-//   //       });
-//   //     } else {
-//   //       res.status(401).json({ message: "You are not authorized" });
-//   //     }
-//   //   } catch (error) {
-//   //     res.status(520).send(error);
-//   //   }
-//   // },
-// };
-// export default jwtConfig
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// import {JwtPayload} from "jsonwebtoken"; 
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+// import config from "../config";
+const db_1 = __importDefault(require("../db/db"));
+const jwtConfig = {
+    sign(payload) {
+        const token = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET_KEY);
+        console.log('token', token);
+        return token;
+    },
+    verifyUser(req, res, next) {
+        var _a;
+        const authHeader = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
+        try {
+            if (authHeader) {
+                const [bearer, token] = authHeader.split(" ");
+                jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        res.status(401).json({ message: "You are not authorized" });
+                    }
+                    else {
+                        // req.user = decoded as JwtPayload | object;
+                        const user = yield db_1.default.user.findFirst({
+                            where: {
+                                token
+                            }
+                        });
+                        res.locals.user = user;
+                        console.log(user);
+                        // req.user = decoded
+                        next();
+                    }
+                }));
+            }
+            else {
+                res.status(401).json({ message: "You are not authorized" });
+            }
+        }
+        catch (error) {
+            // console.log(err);
+            res.status(520).send(error);
+        }
+    },
+    authGuard(req, res) {
+        var _a;
+        const authHeader = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
+        try {
+            if (authHeader) {
+                const [bearer, token] = authHeader.split(" ");
+                jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        res.status(401).json({ message: "You are not authorized" });
+                    }
+                    else {
+                        // req.user = decoded as JwtPayload | object;
+                        const user = yield db_1.default.user.findFirst({
+                            where: {
+                                token: token
+                            }
+                        });
+                        if (!user) {
+                            return res.status(401).json({ message: "You are not authorized" });
+                        }
+                        return res.status(200).json({ message: "User verified", user });
+                    }
+                }));
+            }
+            else {
+                res.status(401).json({ message: "You are not authorized" });
+            }
+        }
+        catch (error) {
+            // console.log(err);
+            res.status(520).send(error);
+        }
+    },
+    // async verifyAdmin(req, res, next) {
+    //   const authHeader = req.headers.authorization;
+    //   try {
+    //     if (authHeader) {
+    //       const [bearer, token] = authHeader.split(" ");
+    //       // const decoded = await userModel.find({ email: token.user.email });
+    //       jwt.verify(token, JWT_SECRET_KEY, async function (err, decoded) {
+    //         await supabase
+    //           .from("Users")
+    //           .select("*")
+    //           .eq("email", decoded?.user?.email);
+    //         if (err) {
+    //           res.status(401).json({ message: "You are not authorized" });
+    //         } else if (decoded.user.role !== "admin") {
+    //           console.log(decoded.newUser.role);
+    //           res.status(401).json({ message: "You are not authorized" });
+    //         } else {
+    //           req.user = decoded;
+    //           console.log("authorized");
+    //           next();
+    //         }
+    //       });
+    //     } else {
+    //       res.status(401).json({ message: "You are not authorized" });
+    //     }
+    //   } catch (error) {
+    //     res.status(520).send(error);
+    //   }
+    // },
+};
+exports.default = jwtConfig;
 //# sourceMappingURL=jwt.js.map

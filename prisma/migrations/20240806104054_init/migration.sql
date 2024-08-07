@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `shippings` ADD COLUMN `arrangementStatus` ENUM('NOT_ARRANGED', 'PICK_UP', 'DROP_OFF') NOT NULL DEFAULT 'NOT_ARRANGED';

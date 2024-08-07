@@ -1,3 +1,64 @@
+// // This is your Prisma schema file,
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+
+// model User {
+//   id          Int           @id @default(autoincrement())
+//   firstname   String
+//   lastname    String
+//   email       String        @unique
+//   password    String
+//   createdAt   DateTime      @default(now())
+//   updatedAt   DateTime      @updatedAt
+//   dateofbirth DateTime?
+//   phone       Int?          @unique
+//   token       String?       @db.Text
+//   favourites  Favourites[]
+//   products    Products[]    @relation("myProducts")
+// }
+
+// model Otp {
+//   id     Int @id @default(autoincrement())
+//   userId Int
+//   otp    Int
+// }
+
+// model Products {
+//   id       Int    @id @default(autoincrement())
+//   name     String
+//   quantity Int
+//   metaltype String
+
+//   updatedAt   DateTime      @updatedAt
+//   createdAt   DateTime      @default(now())
+//   description String
+//   seller      User          @relation("myProducts", fields: [sellerId], references: [id])
+//   sellerId    Int @unique
+//   favourites  Favourites[]
+// }
+
+// model Favourites {
+//   userId    Int 
+//   productId Int
+//   createdAt DateTime @default(now())
+
+//   user    User     @relation(fields: [userId], references: [id])
+//   product Products @relation(fields: [productId], references: [id])
+
+//   @@id([userId, productId])
+// }
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -13,44 +74,240 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Addresstype {
+  HOME
+  OFFICE
+}
+
+enum ShippingAddresstype {
+  DEFAULT
+  NOTDEFAULT
+}
+
 model User {
-  id          Int           @id @default(autoincrement())
-  firstname   String
-  lastname    String
-  email       String        @unique
-  password    String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  dateofbirth DateTime?
-  phone       Int?          @unique
-  token       String?       @db.Text
-  favourites  UserProduct[]
-  products    Products[]    @relation("myProducts")
+  id             Int                     @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  fullName       String?
+  gender         String?
+  email          String                  @unique
+  password       String
+  imageUrl       String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  dateOfBirth    DateTime?
+  phone          String?                 @unique
+  token          String?                 @db.Text
+  notifications  ShippingNotifications[]
+  favourites     Favourites[]
+  products       Products[]              @relation("myProducts")
+  addresses      Address[]               @relation("myAddresses")
+  creditCards    CreditCards[]
+  bankAccounts   BankAccounts[]
+  digitalWallets DigitalWallets[]
+  cart           Cart[]
+  recieverOrders Order[]                 @relation("reciever")
+  senderOrders   Order[]                 @relation("sender")
 }
 
 model Otp {
   id     Int @id @default(autoincrement())
   userId Int
+  otp    Int
+}
+
+enum MetalType {
+  gold
+  silver
+  platinum
+  palladium
+  rare
 }
 
 model Products {
-  id          Int           @id @default(autoincrement())
-  name        String
-  updatedAt   DateTime      @updatedAt
-  createdAt   DateTime      @default(now())
-  description String
-  seller      User          @relation("myProducts", fields: [sellerId], references: [id])
-  sellerId    Int
-  favourites  UserProduct[]
+  id                Int              @id @default(autoincrement())
+  sellerId          Int
+  name              String
+  metalType         MetalType        @default(gold)
+  available         Int
+  rating            Int?
+  price             Int
+  Specifications    Specifications[]
+  productDetails    String
+  description       String
+  productHighlights Highlights[]
+  images            Images[]
+  videos            Videos[]
+  seller            User             @relation("myProducts", fields: [sellerId], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  favourites        Favourites[]     @relation()
+  cart              Cart[]
 }
 
-model UserProduct {
+model Specifications {
+  id            Int      @id @default(autoincrement())
+  productId     Int
+  specification String
+  product       Products @relation(fields: [productId], references: [id])
+}
+
+model Images {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  image     String
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+model Highlights {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  highlight String
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+model Videos {
+  id        Int    @id @default(autoincrement())
+  productId Int
+  video     String
+
+  product Products @relation(fields: [productId], references: [id])
+}
+
+model Favourites {
   userId    Int
   productId Int
-  createdAt DateTime @default(now())
-
-  user    User     @relation(fields: [userId], references: [id])
-  product Products @relation(fields: [productId], references: [id])
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+  product   Products? @relation(fields: [productId], references: [id])
 
   @@id([userId, productId])
+}
+
+model Address {
+  id                  Int                 @id @default(autoincrement())
+  userId              Int
+  user                User                @relation("myAddresses", fields: [userId], references: [id])
+  address             String
+  city                String
+  state               String
+  phone               String
+  fullName            String
+  postalcode          Int
+  createdAt           DateTime            @default(now())
+  addressType         Addresstype         @default(HOME)
+  shippingAddressType ShippingAddresstype @default(DEFAULT)
+}
+
+model CreditCards {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  cardNumber BigInt
+  expiryDate DateTime
+  cvv        BigInt
+  nameOnCard String
+}
+
+model BankAccounts {
+  id          Int    @id @default(autoincrement())
+  userId      Int
+  user        User   @relation(fields: [userId], references: [id])
+  bankName    String
+  accountName String
+  accountNo   BigInt
+}
+
+model DigitalWallets {
+  id            Int    @id @default(autoincrement())
+  userId        Int
+  user          User   @relation(fields: [userId], references: [id])
+  accountNumber BigInt
+  email         String
+  walletName    String
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  user      User     @relation(fields: [userId], references: [id])
+  product   Products @relation(fields: [productId], references: [id])
+}
+
+enum ShippingUpdate {
+  ORDER_PLACED
+  VERIFICATION_PROCESS
+  VERIFIED
+  ON_THE_ROAD
+  DELIVERED
+}
+
+enum ShippingArrangement {
+  NOT_ARRANGED
+  PICK_UP
+  DROP_OFF
+}
+
+enum ShippingStatus {
+  COMPLETED
+  NOT_COMPLETED
+}
+
+model Shippings {
+  id                    Int                     @id @default(autoincrement())
+  orderId               Int                     @unique
+  cost                  Int
+  status                ShippingStatus          @default(NOT_COMPLETED)
+  arrangementStatus     ShippingArrangement     @default(NOT_ARRANGED)
+  ShippingNotifications ShippingNotifications[]
+  shippingUpdate        ShippingUpdate          @default(ORDER_PLACED)
+  order                 Order?                  @relation(fields: [orderId], references: [id])
+}
+
+enum MetalDetecttionService {
+  TRUE
+  FALSE
+}
+
+model Order {
+  id                         Int        @id @default(autoincrement())
+  Shippings                  Shippings? @relation
+  productId                  Int
+  quantity                   Int
+  price                      Int
+  orderPlacedDate            DateTime   @default(now())
+  orderExpectedDate          DateTime
+  recieverId                 Int
+  senderId                   Int
+  paymentMethod              String
+  messageForSeller           String?
+  metalAuthenticaitonService Boolean    @default(false)
+  reciever                   User?      @relation("reciever", fields: [recieverId], references: [id])
+  sender                     User?      @relation("sender", fields: [senderId], references: [id])
+}
+
+model ShippingNotifications {
+  id               Int       @id @default(autoincrement())
+  shippingId       Int
+  userId           Int
+  notificationTime DateTime  @default(now())
+  notificationText String
+  user             User      @relation(fields: [userId], references: [id])
+  shipping         Shippings @relation(fields: [shippingId], references: [id])
+}
+
+model ProductReviews {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  productId Int?
+  ratings   Int
+  review    String
+}
+
+model WebsiteReviews {
+  id      Int    @id @default(autoincrement())
+  userId  Int
+  ratings Int
+  review  String
 }
