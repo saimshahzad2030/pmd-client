@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const db_1 = __importDefault(require("./db/db"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const feedback_routes_1 = __importDefault(require("./routes/feedback.routes"));
 const favourites_routes_1 = __importDefault(require("./routes/favourites.routes"));
@@ -26,6 +27,7 @@ const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const shipping_routes_1 = __importDefault(require("./routes/shipping.routes"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const seialize_bigint_1 = require("./utils/seialize-bigint");
 const stripe_1 = require("./stripe/stripe");
 const config_1 = __importDefault(require("./config"));
 const app = (0, express_1.default)();
@@ -55,44 +57,37 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // bucket.upload('D:/office/pmd-server/src/uploads/DK1A2226.JPG', {
         //   destination: 'uploads/file2.jpg'
         // });
-        // const users = await prisma.user.findMany({
-        //   include: {
-        //     favourites: {
-        //       include: {
-        //         product: true
-        //       }
-        //     },
-        //     creditCards: true,
-        //     bankAccounts: true,
-        //     digitalWallets: true,
-        //     products: true,
-        //     addresses: true,
-        //     notifications: true,
-        //     cart: {
-        //       include: {
-        //         product: true
-        //       }
-        //     },
-        //     recieverOrders: {
-        //       include: {
-        //         Shippings: true
-        //       }
-        //     },
-        //     senderOrders: {
-        //       include: {
-        //         Shippings: true
-        //       }
-        //     }
-        //   },
-        // });
-        // const products = await prisma.products.findMany({
-        //   include: {
-        //     images: true,
-        //     videos: true
-        //   }
-        // }); 
-        res.json({ message: "sdasd" });
-        // res.json({ users: serializeBigInt(users), products: serializeBigInt(products), message: 'Fetched successfully' });
+        const users = yield db_1.default.user.findMany({
+            include: {
+                favourites: {
+                    include: {
+                        product: true
+                    }
+                },
+                creditCards: true,
+                bankAccounts: true,
+                digitalWallets: true,
+                products: true,
+                addresses: true,
+                notifications: true,
+                cart: {
+                    include: {
+                        product: true
+                    }
+                },
+                recieverOrders: {
+                    include: {
+                        Shippings: true
+                    }
+                },
+                senderOrders: {
+                    include: {
+                        Shippings: true
+                    }
+                }
+            },
+        });
+        res.json({ users: (0, seialize_bigint_1.serializeBigInt)(users), message: 'Fetched successfully' });
     }
     catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });

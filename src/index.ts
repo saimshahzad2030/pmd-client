@@ -53,44 +53,38 @@ app.get('/', async (req: Request, res: Response) => {
     //   destination: 'uploads/file2.jpg'
     // });
 
-    // const users = await prisma.user.findMany({
-    //   include: {
-    //     favourites: {
-    //       include: {
-    //         product: true
-    //       }
-    //     },
-    //     creditCards: true,
-    //     bankAccounts: true,
-    //     digitalWallets: true,
-    //     products: true,
-    //     addresses: true,
-    //     notifications: true,
-    //     cart: {
-    //       include: {
-    //         product: true
-    //       }
-    //     },
-    //     recieverOrders: {
-    //       include: {
-    //         Shippings: true
-    //       }
-    //     },
-    //     senderOrders: {
-    //       include: {
-    //         Shippings: true
-    //       }
-    //     }
-    //   },
-    // });
-    // const products = await prisma.products.findMany({
-    //   include: {
-    //     images: true,
-    //     videos: true
-    //   }
-    // }); 
-    res.json({message:"sdasd"})
-    // res.json({ users: serializeBigInt(users), products: serializeBigInt(products), message: 'Fetched successfully' });
+    const users = await prisma.user.findMany({
+      include: {
+        favourites: {
+          include: {
+            product: true
+          }
+        },
+        creditCards: true,
+        bankAccounts: true,
+        digitalWallets: true,
+        products: true,
+        addresses: true,
+        notifications: true,
+        cart: {
+          include: {
+            product: true
+          }
+        },
+        recieverOrders: {
+          include: {
+            Shippings: true
+          }
+        },
+        senderOrders: {
+          include: {
+            Shippings: true
+          }
+        }
+      },
+    });
+    
+    res.json({ users: serializeBigInt(users) , message: 'Fetched successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
