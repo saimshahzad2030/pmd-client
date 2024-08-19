@@ -93,7 +93,6 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 videos: true
             }
         });
-        res.json({ message: 'Fetched successfully' });
         res.json({ users: (0, seialize_bigint_1.serializeBigInt)(users), products: (0, seialize_bigint_1.serializeBigInt)(products), message: 'Fetched successfully' });
     }
     catch (error) {

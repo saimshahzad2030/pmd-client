@@ -88,8 +88,7 @@ app.get('/', async (req: Request, res: Response) => {
         images: true,
         videos: true
       }
-    });
-    res.json({  message: 'Fetched successfully' });
+    }); 
     
     res.json({ users: serializeBigInt(users), products: serializeBigInt(products), message: 'Fetched successfully' });
   } catch (error) {
