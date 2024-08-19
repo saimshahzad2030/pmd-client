@@ -14,13 +14,8 @@ import shippingRoutes from './routes/shipping.routes'
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import { serializeBigInt } from "./utils/seialize-bigint";
-import { ItemPublicTokenExchangeRequest, SandboxPublicTokenCreateRequest } from 'plaid';
-import { Products, CountryCode } from 'plaid';
-import { client } from './plaid/plaid';
-import { generateOtp } from './services/generate-token';
-import { stripe } from './stripe/stripe';
-import { error } from 'console';
-import { messaging } from 'firebase-admin';
+ 
+import { stripe } from './stripe/stripe'; 
 import config from './config';
 const app = express();
 app.use(cors())
@@ -86,7 +81,7 @@ app.get('/', async (req: Request, res: Response) => {
     
     res.json({ users: serializeBigInt(users) , message: 'Fetched successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: error });
   }
 });
 

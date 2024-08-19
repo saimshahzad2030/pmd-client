@@ -90,7 +90,7 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.json({ users: (0, seialize_bigint_1.serializeBigInt)(users), message: 'Fetched successfully' });
     }
     catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: error });
     }
 }));
 // app.post('/api/create-link-token', async (req: Request, res: Response) => {
