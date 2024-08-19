@@ -14,7 +14,16 @@ export const addNewWallet = async (req: Request, res: Response) => {
         }
          
         const userId = res?.locals?.user?.id;
-        
+        let exist = await prisma.digitalWallets.findFirst({
+            where:{ 
+                accountNumber, 
+                email
+            }
+             
+        }).catch(error=>{console.log(error)})
+        if(exist){
+            return res.status(400).json({message:"Already Exist"})
+        }
         let newDigitalWallet = await prisma.digitalWallets.create({
             data: { 
                 userId,

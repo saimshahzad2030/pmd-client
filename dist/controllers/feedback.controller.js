@@ -53,7 +53,7 @@ const addWebAppFeedback = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!ratings) {
             return res.status(400).json({ message: "Rate the Website please" });
         }
-        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user;
+        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user.id;
         let feedback = yield db_1.default.websiteReviews.create({
             data: {
                 review,
@@ -79,11 +79,14 @@ const fetchWebAppFeedbacks = (req, res) => __awaiter(void 0, void 0, void 0, fun
         }
         const startIndex = Number(start);
         const endIndex = Number(end);
-        const websiteFeedbacks = yield db_1.default.productReviews.findMany({
+        const websiteFeedbacks = yield db_1.default.websiteReviews.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
+            include: {
+                user: true
+            }
         });
-        const totalReviews = yield db_1.default.productReviews.count();
+        const totalReviews = yield db_1.default.websiteReviews.count();
         return res.status(201).json({ message: "Fetched successfully", websiteFeedbacks, totalReviews });
     }
     catch (error) {
@@ -105,6 +108,9 @@ const fetchProductsFeedbacks = (req, res) => __awaiter(void 0, void 0, void 0, f
         const productFeedbacks = yield db_1.default.productReviews.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
+            include: {
+                user: true
+            }
         });
         const totalReviews = yield db_1.default.productReviews.count();
         return res.status(201).json({ message: "Fetched successfully", productFeedbacks, totalReviews });

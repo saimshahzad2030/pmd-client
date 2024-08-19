@@ -12,12 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsers = exports.deleteUser = exports.changeInfo = exports.sendOtp = exports.verifyOtp = exports.changePassword = exports.changePasswordOnForget = exports.loginUser = exports.createUser = void 0;
+exports.updateProfile = exports.getSellerAccountDetails = exports.getUsers = exports.deleteUser = exports.changeInfo = exports.sendOtp = exports.verifyOtp = exports.changePassword = exports.changePasswordOnForget = exports.loginUser = exports.createUser = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jwt_1 = __importDefault(require("../middleware/jwt"));
 const send_email_1 = require("../services/send-email");
 const generate_token_1 = require("../services/generate-token");
+const stripe_1 = require("../stripe/stripe");
+const config_1 = __importDefault(require("../config"));
+const upload_file_1 = require("../services/upload-file");
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { firstName, lastName, email, password } = req.body;
@@ -33,12 +36,24 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return res.status(409).json({ message: "User already exist" });
         }
         const hashPaswd = yield bcrypt_1.default.hash(password, 10);
+        const stripeAccount = yield stripe_1.stripe.accounts.create({
+            type: 'express',
+            country: 'US',
+            email: email,
+            capabilities: {
+                transfers: { requested: true },
+                card_payments: {
+                    requested: true,
+                },
+            },
+        });
         const user = yield db_1.default.user.create({
             data: {
                 email,
                 password: hashPaswd,
                 lastName,
-                firstName
+                firstName,
+                stripeConnectedAccountId: stripeAccount.id
             }
         });
         res.status(200).json({ message: "User created Succesfully", user });
@@ -66,15 +81,15 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const encryptedPassword = yield bcrypt_1.default.compare(password, userExist.password);
         console.log(encryptedPassword);
         if (!encryptedPassword) {
-            return res.status(200).json({ message: "Wrong credentials" });
+            return res.status(409).json({ message: "Wrong credentials" });
         }
-        const token = jwt_1.default.sign({ user: userExist });
+        const token = jwt_1.default.sign({ user: { id: userExist.id, email: userExist.email, stripeConnectedAccountId: userExist.stripeConnectedAccountId } });
         const updatedUser = yield db_1.default.user.update({
             where: {
                 id: userExist.id,
             },
             data: {
-                token: token
+                token
             },
         });
         res.status(200).json({ message: "Login Succesfull", updatedUser });
@@ -87,15 +102,15 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.loginUser = loginUser;
 const changePasswordOnForget = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { password } = req.body;
+        const { password, email } = req.body;
         if (!password) {
             return res.status(404).json({ message: "Enter new Password please" });
         }
         const encryptedPassword = yield bcrypt_1.default.hash(password, 10);
-        const userId = res.locals.user.id;
+        // const userId:number = res.locals.user.id
         yield db_1.default.user.update({
             where: {
-                id: userId,
+                email
             },
             data: {
                 password: encryptedPassword
@@ -105,7 +120,7 @@ const changePasswordOnForget = (req, res) => __awaiter(void 0, void 0, void 0, f
         });
         const updatedUser = yield db_1.default.user.findFirst({
             where: {
-                id: userId,
+                email
             }
         });
         res.status(200).json({ message: "Password Succesfully changed", updatedUser });
@@ -122,18 +137,18 @@ const changePassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!oldPassword || !newPassword) {
             return res.status(404).json({ message: "Enter both passwords please" });
         }
-        const encryptedPassword = yield bcrypt_1.default.hash(oldPassword, 10);
         const userId = res.locals.user.id;
         const userExist = yield db_1.default.user.findFirst({
             where: {
-                id: userId,
-                password: encryptedPassword
+                id: userId
             }
-        }).catch((error) => {
-            return res.status(520).json({ error });
         });
         if (!userExist) {
-            res.status(401).json({ message: "you've entered wrong password" });
+            return res.status(401).json({ message: "You are not authorized" });
+        }
+        const decryptedPassword = yield bcrypt_1.default.compare(oldPassword, userExist.password);
+        if (!decryptedPassword) {
+            return res.status(401).json({ message: "you've entered wrong password" });
         }
         const encryptedPassword2 = yield bcrypt_1.default.hash(newPassword, 10);
         yield db_1.default.user.update({
@@ -275,10 +290,13 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 id: Number(userId)
             }
         }).catch((error) => {
-            // return res.status(520).json({error})
             throw new Error(error);
         });
-        return res.status(200).json({ message: "user deleted succesfully" });
+        yield stripe_1.stripe.accounts.del(res.locals.user.stripeConnectedAccountId).then(() => {
+            return res.status(200).json({ message: "user deleted succesfully" });
+        }).catch((error) => {
+            throw new Error(error);
+        });
     }
     catch (error) {
         res.status(520).send(error);
@@ -342,4 +360,51 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUsers = getUsers;
+const getSellerAccountDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const accountId = res.locals.user.stripeConnectedAccountId;
+        // const accountId = 'acct_1PmsHFQFAm3jyZZu' 
+        const account = yield stripe_1.stripe.accounts.retrieve(accountId);
+        const chargesEnabled = account.charges_enabled;
+        const payoutsEnabled = account.payouts_enabled;
+        if (chargesEnabled && payoutsEnabled) {
+            return res.status(200).json({ authenticationRequired: false });
+        }
+        else {
+            const accountLink = yield stripe_1.stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: `${config_1.default.CLIENT_URL}my-account/my-shop`,
+                return_url: `${config_1.default.CLIENT_URL}my-account/my-shop`,
+                type: 'account_onboarding',
+            });
+            return res.status(200).json({ url: accountLink.url, message: 'You must provide your business details like payment options on whcih u will recieve payments etc', authenticationRequired: true });
+        }
+    }
+    catch (error) {
+        res.status(520).send(error);
+    }
+});
+exports.getSellerAccountDetails = getSellerAccountDetails;
+const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No image uploaded" });
+        }
+        const userId = Number(res.locals.user.id);
+        const imageUrl = yield (0, upload_file_1.uploadFile)(req.file, 'images');
+        const updatedUser = yield db_1.default.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                imageUrl
+            }
+        });
+        res.status(200).json({ imageUrl, updatedUser });
+    }
+    catch (error) {
+        res.status(520).send(error);
+    }
+});
+exports.updateProfile = updateProfile;
 //# sourceMappingURL=user.controller.js.map

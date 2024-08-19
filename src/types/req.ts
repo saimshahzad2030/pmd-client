@@ -1,5 +1,5 @@
 
-import { Addresstype, Highlights, Images, Specifications, Videos } from "@prisma/client"
+import { Addresstype, Highlights, Images, ShippingAddresstype, Specifications, Videos } from "@prisma/client"
 //user
 export type userCreation = {
   firstName: string
@@ -14,6 +14,7 @@ export type userLogin = {
 }
 export type changePasswordOnForgetType = {
   password: string
+  email: string
 }
 export type changePasswordType = {
   oldPassword: string
@@ -74,6 +75,7 @@ export type updateNewAddressType = {
   phone: string
   fullName: string
   addressType: Addresstype
+  shippingAddressType: ShippingAddresstype
 }
 
 export type deleteAddressType = {

@@ -6,13 +6,16 @@ import jwtConfig from "../middleware/jwt";
 import { sendEmail } from '../services/send-email'; 
 import { generateOtp } from '../services/generate-token';
 import { User } from "@prisma/client"; 
-import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken'; 
+import { stripe } from "../stripe/stripe";
+import config from "../config";
+import { uploadFile } from "../services/upload-file";
 export const createUser = async (req: Request, res: Response) => {
   try {
     const { firstName, lastName, email, password } = req.body as userCreation;
     if (!email || !lastName || !firstName || !password) {
       return res.status(404).json({ message: "All fields requried" });
-    }
+    } 
     const userExist = await prisma.user.findFirst({
       where: {
         email: email,
@@ -22,12 +25,25 @@ export const createUser = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "User already exist" });
     }
     const hashPaswd = await bcrypt.hash(password, 10);
+    const stripeAccount = await stripe.accounts.create({
+      type: 'express', 
+      country: 'US',  
+      email: email,  
+      capabilities: {
+        transfers: { requested: true },
+        card_payments: {
+          requested: true,
+        },
+      },
+    });
+  
     const user = await prisma.user.create({
       data: {
         email,
         password: hashPaswd,
         lastName,
-        firstName
+        firstName,
+        stripeConnectedAccountId:stripeAccount.id
       }
     })
     res.status(200).json({ message: "User created Succesfully", user });
@@ -56,16 +72,16 @@ export const loginUser = async (req: Request, res: Response) => {
     const encryptedPassword = await bcrypt.compare(password, userExist.password);
     console.log(encryptedPassword)
     if (!encryptedPassword) {
-      return res.status(200).json({ message: "Wrong credentials" });
+      return res.status(409).json({ message: "Wrong credentials" });
 
     }
-    const token = jwtConfig.sign({ user: userExist })
+    const token = jwtConfig.sign({ user: {id:userExist.id,email:userExist.email,stripeConnectedAccountId:userExist.stripeConnectedAccountId} })
     const updatedUser = await prisma.user.update({
       where: {
         id:userExist.id,
       },
       data: {
-        token:token
+        token
       },
     })
     res.status(200).json({ message: "Login Succesfull",updatedUser});
@@ -77,16 +93,16 @@ export const loginUser = async (req: Request, res: Response) => {
 
 export const changePasswordOnForget = async (req: Request, res: Response) => {
   try {
-    const { password } = req.body as changePasswordOnForgetType;
+    const { password,email  } = req.body as changePasswordOnForgetType;
     if (!password) {
       return res.status(404).json({ message: "Enter new Password please" });
     }
 
     const encryptedPassword =  await bcrypt.hash(password, 10);
-    const userId:number = res.locals.user.id
+    // const userId:number = res.locals.user.id
     await prisma.user.update({
       where: {
-        id:userId ,
+        email
       },
       data:{
         password:encryptedPassword
@@ -96,7 +112,8 @@ export const changePasswordOnForget = async (req: Request, res: Response) => {
     });   
     const updatedUser = await prisma.user.findFirst({
       where: {
-        id:userId ,
+        email
+
       }
        
     })
@@ -113,20 +130,23 @@ export const changePassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Enter both passwords please" });
     }
 
-    const encryptedPassword =  await bcrypt.hash(oldPassword, 10);
-    const userId:number = res.locals.user.id
+    const userId:number = res.locals.user.id  
     const userExist = await prisma.user.findFirst({
       where: {
-        id:userId ,
-        password:encryptedPassword
-      
-    }}).catch((error)=>{
-      return res.status(520).json({error})
-    });  
-    if(!userExist){
-      res.status(401).json({message:"you've entered wrong password"});
+        id:userId  
+        
+      }}) 
+      if(!userExist){
+        return res.status(401).json({message:"You are not authorized"});
+        
+      } 
+      const decryptedPassword = await bcrypt.compare(oldPassword,userExist.password) 
 
-    } 
+
+      if(!decryptedPassword ){
+        return res.status(401).json({message:"you've entered wrong password"});
+        
+      }  
     const encryptedPassword2 =  await bcrypt.hash(newPassword, 10);
 
      await prisma.user.update({
@@ -290,12 +310,17 @@ export const deleteUser = async (req: Request, res: Response) => {
         id:Number(userId)
       
     } 
+    
   }).catch((error)=>{
-      // return res.status(520).json({error})
       throw new Error(error)
     });  
-     
-    return res.status(200).json({ message: "user deleted succesfully"});
+    await stripe.accounts.del(res.locals.user.stripeConnectedAccountId).then(() => {
+      return res.status(200).json({ message: "user deleted succesfully"});
+
+    }).catch((error)=>{ 
+      throw new Error(error)
+    }); 
+
   } catch (error) { 
     res.status(520).send(error);
   }
@@ -355,3 +380,61 @@ export const getUsers = async (req: Request, res: Response) => {
     res.status(520).send(error);
   }
 }
+
+
+
+export const getSellerAccountDetails = async(req:Request,res:Response)=>{
+  try{
+    const accountId = res.locals.user.stripeConnectedAccountId;
+    // const accountId = 'acct_1PmsHFQFAm3jyZZu' 
+    const account = await stripe.accounts.retrieve(
+      accountId
+    )
+    const chargesEnabled = account.charges_enabled;
+        const payoutsEnabled = account.payouts_enabled; 
+      
+        if (chargesEnabled && payoutsEnabled) {
+          
+          return  res.status(200).json({authenticationRequired:false})
+
+        } else {
+          const accountLink = await stripe.accountLinks.create({
+            account: accountId,  
+            refresh_url: `${config.CLIENT_URL}my-account/my-shop`,
+            return_url: `${config.CLIENT_URL}my-account/my-shop`,
+            type: 'account_onboarding',
+          });
+      
+                  return  res.status(200).json({url: accountLink.url,message:'You must provide your business details like payment options on whcih u will recieve payments etc',authenticationRequired:true})
+
+        }
+  }
+  catch(error){
+    res.status(520).send(error);
+  
+  }
+  }
+
+  export const updateProfile = async(req:Request,res:Response)=>{
+    try{
+      if (!req.file) {
+        return res.status(400).json({ message: "No image uploaded" });
+    }
+    const userId = Number(res.locals.user.id);
+    const imageUrl = await uploadFile(req.file, 'images');
+    const updatedUser = await prisma.user.update({
+      where:{
+        id:userId
+      },
+      data:{
+        imageUrl
+      }
+    })
+ 
+    res.status(200).json({ imageUrl,updatedUser });
+    }
+    catch(error){
+      res.status(520).send(error);
+    
+    }
+    }

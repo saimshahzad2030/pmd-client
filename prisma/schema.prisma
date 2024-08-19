@@ -70,7 +70,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -85,29 +85,32 @@ enum ShippingAddresstype {
 }
 
 model User {
-  id             Int                     @id @default(autoincrement())
-  firstName      String
-  lastName       String
-  fullName       String?
-  gender         String?
-  email          String                  @unique
-  password       String
-  imageUrl       String?
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  dateOfBirth    DateTime?
-  phone          String?                 @unique
-  token          String?                 @db.Text
-  notifications  ShippingNotifications[]
-  favourites     Favourites[]
-  products       Products[]              @relation("myProducts")
-  addresses      Address[]               @relation("myAddresses")
-  creditCards    CreditCards[]
-  bankAccounts   BankAccounts[]
-  digitalWallets DigitalWallets[]
-  cart           Cart[]
-  recieverOrders Order[]                 @relation("reciever")
-  senderOrders   Order[]                 @relation("sender")
+  id                       Int                     @id @default(autoincrement())
+  firstName                String
+  lastName                 String
+  fullName                 String?
+  gender                   String?
+  email                    String                  @unique
+  password                 String
+  imageUrl                 String?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  dateOfBirth              DateTime?
+  phone                    String?                 @unique
+  token                    String?                 @db.Text
+  stripeConnectedAccountId String?                 @unique
+  notifications            ShippingNotifications[]
+  favourites               Favourites[]
+  products                 Products[]              @relation("myProducts")
+  addresses                Address[]               @relation("myAddresses")
+  creditCards              CreditCards[]
+  bankAccounts             BankAccounts[]
+  digitalWallets           DigitalWallets[]
+  cart                     Cart[]
+  recieverOrders           Order[]                 @relation("reciever")
+  senderOrders             Order[]                 @relation("sender")
+  productReviews           ProductReviews[]
+  websiteReviews           WebsiteReviews[]
 }
 
 model Otp {
@@ -135,6 +138,7 @@ model Products {
   Specifications    Specifications[]
   productDetails    String
   description       String
+  model             String?
   productHighlights Highlights[]
   images            Images[]
   videos            Videos[]
@@ -142,6 +146,7 @@ model Products {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   favourites        Favourites[]     @relation()
+  reviews           ProductReviews[]
   cart              Cart[]
 }
 
@@ -200,17 +205,20 @@ model Address {
 }
 
 model CreditCards {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  cardNumber BigInt
-  expiryDate DateTime
-  cvv        BigInt
-  nameOnCard String
+  id              Int      @id @default(autoincrement())
+  paymentMethodId String?  @unique
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  cardNumber      BigInt
+  expiryDate      DateTime
+  cvv             BigInt
+  nameOnCard      String
 }
 
 model BankAccounts {
-  id          Int    @id @default(autoincrement())
+  id              Int     @id @default(autoincrement())
+  paymentMethodId String? @unique
+
   userId      Int
   user        User   @relation(fields: [userId], references: [id])
   bankName    String
@@ -219,7 +227,9 @@ model BankAccounts {
 }
 
 model DigitalWallets {
-  id            Int    @id @default(autoincrement())
+  id              Int     @id @default(autoincrement())
+  paymentMethodId String? @unique
+
   userId        Int
   user          User   @relation(fields: [userId], references: [id])
   accountNumber BigInt
@@ -237,6 +247,7 @@ model Cart {
 
 enum ShippingUpdate {
   ORDER_PLACED
+  ORDER_PACKED
   VERIFICATION_PROCESS
   VERIFIED
   ON_THE_ROAD
@@ -272,6 +283,7 @@ enum MetalDetecttionService {
 
 model Order {
   id                         Int        @id @default(autoincrement())
+  paymentIntentId            String?    @unique
   Shippings                  Shippings? @relation
   productId                  Int
   quantity                   Int
@@ -298,16 +310,22 @@ model ShippingNotifications {
 }
 
 model ProductReviews {
-  id        Int    @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   userId    Int
   productId Int?
-  ratings   Int
-  review    String
+  createdAt DateTime @default(now())
+
+  ratings Int
+  review  String
+  product Products? @relation(fields: [productId], references: [id])
+  user    User      @relation(fields: [userId], references: [id])
 }
 
 model WebsiteReviews {
-  id      Int    @id @default(autoincrement())
-  userId  Int
-  ratings Int
-  review  String
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  ratings   Int
+  createdAt DateTime @default(now())
+  review    String
+  user      User     @relation(fields: [userId], references: [id])
 }

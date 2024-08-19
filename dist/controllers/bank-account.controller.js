@@ -23,6 +23,15 @@ const addNewBankAccount = (req, res) => __awaiter(void 0, void 0, void 0, functi
             return res.status(400).json({ message: "Submit all fields" });
         }
         const userId = (_b = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.id;
+        let bankExist = yield db_1.default.bankAccounts.findFirst({
+            where: {
+                accountNo,
+                bankName
+            }
+        }).catch(error => { console.log(error); });
+        if (bankExist) {
+            return res.status(400).json({ message: "Already Exist" });
+        }
         let newBankAccount = yield db_1.default.bankAccounts.create({
             data: {
                 userId,

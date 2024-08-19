@@ -44,7 +44,7 @@ export const addWebAppFeedback = async (req: Request, res: Response) => {
         if (!ratings) {
             return res.status(400).json({ message: "Rate the Website please" })
         }
-        const userId = res?.locals?.user;
+        const userId = res?.locals?.user.id;
 
 
         let feedback = await prisma.websiteReviews.create({
@@ -77,12 +77,15 @@ export const fetchWebAppFeedbacks = async (req: Request, res: Response) => {
         const startIndex = Number(start);
         const endIndex = Number(end);
  
-        const websiteFeedbacks = await prisma.productReviews.findMany({
+        const websiteFeedbacks = await prisma.websiteReviews.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
+            include:{
+                user:true
+            }
         });
  
-        const totalReviews = await prisma.productReviews.count();
+        const totalReviews = await prisma.websiteReviews.count();
 
         return res.status(201).json({ message: "Fetched successfully", websiteFeedbacks,totalReviews }) 
     }
@@ -109,6 +112,9 @@ export const fetchProductsFeedbacks = async (req: Request, res: Response) => {
         const productFeedbacks = await prisma.productReviews.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
+            include:{
+                user:true
+            }
         });
  
         const totalReviews = await prisma.productReviews.count();

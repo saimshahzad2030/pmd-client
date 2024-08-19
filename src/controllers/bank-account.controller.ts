@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../db/db";
 import { addNewBankAccoutType } from 'req'; 
 import { serializeBigInt } from "../utils/seialize-bigint";
+import { messaging } from "firebase-admin";
  
 
 
@@ -13,7 +14,16 @@ export const addNewBankAccount = async (req: Request, res: Response) => {
         }
          
         const userId = res?.locals?.user?.id;
-        
+        let bankExist = await prisma.bankAccounts.findFirst({
+            where:{ 
+                accountNo,
+                bankName
+            }
+             
+        }).catch(error=>{console.log(error)})
+        if(bankExist){
+            return res.status(400).json({message:"Already Exist"})
+        }
         let newBankAccount = await prisma.bankAccounts.create({
             data: { 
                 userId,

@@ -10,7 +10,7 @@ const router = (0, express_1.Router)();
 // const userRoutes = express.Router();
 router.route("/website-reviews")
     .post(jwt_1.default.verifyUser, feedback_controller_1.addWebAppFeedback)
-    .get(jwt_1.default.verifyUser, feedback_controller_1.fetchWebAppFeedbacks);
+    .get(feedback_controller_1.fetchWebAppFeedbacks);
 router.route("/product-reviews")
     .post(jwt_1.default.verifyUser, feedback_controller_1.addProductFeedback)
     .get(jwt_1.default.verifyUser, feedback_controller_1.fetchProductsFeedbacks);

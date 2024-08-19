@@ -12,20 +12,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addNewOrder = void 0;
+exports.fetchOrders = exports.addNewOrder = void 0;
 const db_1 = __importDefault(require("../db/db"));
+const stripe_1 = require("../stripe/stripe");
+const config_1 = __importDefault(require("../config"));
 const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { productId, quantity, price, orderPlacedDate, orderExpectedDate, senderId, paymentMethod, messageForSeller, metalAuthenticaitonService, shippingCost } = req.body;
-        // if (!description ) {
-        if (!orderExpectedDate || !quantity || !orderPlacedDate || !paymentMethod || !messageForSeller || !metalAuthenticaitonService || !price || !shippingCost || !senderId) {
-            return res.status(400).json({ message: "All fields are required" });
+        if (!orderExpectedDate) {
+            return res.status(400).json({ message: "orderExpectedDate fields are required" });
         }
-        console.log(req.body);
+        if (!quantity) {
+            return res.status(400).json({ message: "quantity fields are required" });
+        }
+        if (!orderPlacedDate) {
+            return res.status(400).json({ message: "orderPlacedDate fields are required" });
+        }
+        if (!paymentMethod) {
+            return res.status(400).json({ message: "paymentMethod fields are required" });
+        }
+        if (!messageForSeller) {
+            return res.status(400).json({ message: "messageForSeller fields are required" });
+        }
+        if (!metalAuthenticaitonService) {
+            return res.status(400).json({ message: "metalAuthenticaitonService fields are required" });
+        }
+        if (!price) {
+            return res.status(400).json({ message: "price fields are required" });
+        }
+        if (!shippingCost) {
+            return res.status(400).json({ message: "shippingCost required" });
+        }
+        if (!senderId) {
+            return res.status(400).json({ message: "senderId required" });
+        }
+        const sender = yield db_1.default.user.findFirst({
+            where: {
+                id: senderId,
+            }
+        });
         const recieverId = Number((_a = res.locals) === null || _a === void 0 ? void 0 : _a.user.id);
         const formattedOrderPlacedDate = new Date(orderPlacedDate).toISOString();
         const formattedOrderExpectedDate = new Date(orderExpectedDate).toISOString();
+        const paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+            amount: 10000,
+            currency: 'usd',
+            payment_method_types: ['card'],
+            payment_method: 'pm_card_visa',
+            confirm: true,
+            transfer_data: {
+                destination: sender.stripeConnectedAccountId,
+            },
+        }, {
+            stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+        });
+        console.log(paymentIntent);
         const newShipping = yield db_1.default.order.create({
             data: {
                 productId,
@@ -38,6 +80,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 messageForSeller,
                 metalAuthenticaitonService,
                 paymentMethod,
+                paymentIntentId: paymentIntent.id,
                 Shippings: {
                     create: {
                         cost: shippingCost,
@@ -48,29 +91,41 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             }
         });
-        res.status(201).json({ message: "Order placed successfully", newShipping });
+        console.log(newShipping);
+        res.status(201).json({ message: "Order placed successfully", newShipping, clientSecret: paymentIntent });
         // res.status(201).json({ message: "Product added successfully", imageUrls,videoUrls,specifications,productHighlights });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+});
+exports.addNewOrder = addNewOrder;
+const fetchOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = Number(res.locals.user.id);
+        console.log(userId);
+        const orders = yield db_1.default.order.findMany({
+            where: {
+                recieverId: userId
+            },
+            include: {
+                Shippings: {
+                    include: {
+                        ShippingNotifications: true
+                    }
+                },
+                reciever: true,
+                sender: true
+            }
+        });
+        res.status(200).json({ message: 'Orders fetched', orders });
     }
     catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
     }
 });
-exports.addNewOrder = addNewOrder;
-// export const fetchProducts = async (req: Request, res: Response) => {
-//     try {
-//          const products = await prisma.products.findMany({
-//             include:{
-//                 images:true,
-//                 Specifications:true,
-//                 productHighlights:true,
-//                 videos:true
-//             }
-//         })
-//         res.status(200).json({message:'Produst fetched',products})
-//     } catch (error) {
-//         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
-//     }
-// };
+exports.fetchOrders = fetchOrders;
 // export const removeProduct = async (req: Request, res: Response) => {
 //     try {
 //          const {id} = req.query;

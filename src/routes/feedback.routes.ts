@@ -8,7 +8,7 @@ const router = Router()
 
 router.route("/website-reviews")
     .post(jwtConfig.verifyUser,addWebAppFeedback)
-    .get(jwtConfig.verifyUser,fetchWebAppFeedbacks);
+    .get(fetchWebAppFeedbacks);
 router.route("/product-reviews")
     .post(jwtConfig.verifyUser,addProductFeedback)
     .get(jwtConfig.verifyUser,fetchProductsFeedbacks)

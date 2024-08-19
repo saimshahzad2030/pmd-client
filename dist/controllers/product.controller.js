@@ -12,40 +12,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.addProduct = void 0;
+exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.fetchSingleProduct = exports.addProduct = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const upload_file_1 = require("../services/upload-file");
 const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { description, specifications, name, available, price, productDetails, productHighlights, metalType } = req.body;
-        // if (!description ) {
-        if (!description || !specifications || !name || !available || !price || !productDetails || !productHighlights || !metalType) {
-            return res.status(400).json({ message: "All fields are required" });
+        if (!description) {
+            return res.status(400).json({ message: "Enter Description" });
+        }
+        if (!specifications) {
+            return res.status(400).json({ message: "Enter specifications" });
+        }
+        if (!name) {
+            return res.status(400).json({ message: "Enter name" });
+        }
+        if (!available) {
+            return res.status(400).json({ message: "Enter available" });
+        }
+        if (!price) {
+            return res.status(400).json({ message: "Enter specifications" });
+        }
+        if (!productDetails) {
+            return res.status(400).json({ message: "Enter productDetails" });
+        }
+        if (!productHighlights) {
+            return res.status(400).json({ message: "Enter productHighlights" });
+        }
+        if (!metalType) {
+            return res.status(400).json({ message: "Enter metalType" });
         }
         if (!req.files) {
             res.status(400).send('No file uploaded.');
             return;
         }
-        console.log(req.body);
+        // console.log(req.body,'req')
         const files = req.files;
         const images = Array.isArray(files) ? [] : (files['images'] || []);
         const videos = Array.isArray(files) ? [] : (files['videos'] || []);
         const imageUrls = yield Promise.all(images.map((image) => __awaiter(void 0, void 0, void 0, function* () {
-            console.log(image);
             return yield (0, upload_file_1.uploadFile)(image, `images`);
         })));
         const videoUrls = yield Promise.all(videos.map((video) => __awaiter(void 0, void 0, void 0, function* () {
-            return yield (0, upload_file_1.uploadFile)(video.buffer, `videos`);
+            return yield (0, upload_file_1.uploadFile)(video, `videos`);
         })));
-        // console.log(typeof specifications)
-        // let abc:any  = specifications 
-        // const parsedSpecifications = abc.slice(1, -1).split(',');  
-        // let abcd:any  = specifications 
-        // const parsedHighlights = abcd.slice(1, -1).split(',');  
-        //  console.log(parsedSpecifications)
+        console.log(productHighlights);
         const sellerId = Number((_a = res.locals) === null || _a === void 0 ? void 0 : _a.user.id);
-        console.log(res.locals);
         const newProduct = yield db_1.default.products.create({
             data: {
                 name,
@@ -72,9 +85,11 @@ const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     }))
                 },
                 productHighlights: {
-                    create: productHighlights.map((highlight) => ({
-                        highlight: highlight
-                    }))
+                    create: Array.isArray(productHighlights)
+                        ? productHighlights.map((highlight) => ({
+                            highlight: highlight
+                        }))
+                        : [{ highlight: productHighlights }]
                 }
             }
         });
@@ -87,6 +102,72 @@ const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.addProduct = addProduct;
+const fetchSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.query;
+        console.log(id);
+        const product = yield db_1.default.products.findFirst({
+            where: {
+                id: Number(id)
+            },
+            include: {
+                images: true,
+                Specifications: true,
+                productHighlights: true,
+                videos: true,
+                favourites: true
+            }
+        });
+        const relatedProducts = yield db_1.default.products.findMany({
+            where: {
+                id: {
+                    not: product.id,
+                },
+                metalType: product.metalType
+            },
+            include: {
+                images: true,
+                Specifications: true,
+                productHighlights: true,
+                videos: true,
+                favourites: true
+            }
+        });
+        const productReview = yield db_1.default.productReviews.findMany({
+            where: {
+                productId: Number(id)
+            },
+            include: {
+                user: true,
+            }
+        });
+        res.status(200).json({ message: 'Product fetched', product, relatedProducts, productReview });
+    }
+    catch (error) {
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+});
+exports.fetchSingleProduct = fetchSingleProduct;
+// export const fetchRelatedProducts = async (req: Request, res: Response) => {
+//     try {
+//         const {metalType} = req.query; 
+//          const product = await prisma.products.findMany({
+//             where:{
+//                 metalType:metalType as MetalType
+//             },
+//             include:{
+//                 images:true,
+//                 Specifications:true,
+//                 productHighlights:true,
+//                 videos:true,
+//                 favourites:true
+//             }
+//         })
+//         res.status(200).json({message:'Product fetched',product})
+//     } catch (error) {
+//         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+//     }
+// };
 const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield db_1.default.products.findMany({
@@ -94,10 +175,11 @@ const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 images: true,
                 Specifications: true,
                 productHighlights: true,
-                videos: true
+                videos: true,
+                favourites: true
             }
         });
-        res.status(200).json({ message: 'Produst fetched', products });
+        res.status(200).json({ message: 'Products fetched', products });
     }
     catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
@@ -106,11 +188,21 @@ const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.fetchProducts = fetchProducts;
 const fetchSpecificProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { typeOfMetal } = req.query;
+        const { typeOfMetal, start, end } = req.query;
         if (!typeOfMetal) {
             return res.status(400).json({ message: "enter metal type" });
         }
+        if (!start) {
+            return res.status(400).json({ message: "enter starting" });
+        }
+        if (!end) {
+            return res.status(400).json({ message: "enter ending" });
+        }
+        const startIndex = Number(start);
+        const endIndex = Number(end);
         const products = yield db_1.default.products.findMany({
+            skip: startIndex,
+            take: endIndex - startIndex,
             where: {
                 metalType: typeOfMetal
             },
@@ -118,7 +210,8 @@ const fetchSpecificProducts = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 images: true,
                 Specifications: true,
                 productHighlights: true,
-                videos: true
+                videos: true,
+                favourites: true
             }
         });
         res.status(200).json({ message: 'Produst fetched', products });
@@ -135,33 +228,52 @@ const removeProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return res.status(400).json({ message: "Id not provided" });
         }
         const userId = Number(res.locals.user.id);
-        yield db_1.default.images.deleteMany({
-            where: {
-                productId: Number(id)
-            }
-        });
-        yield db_1.default.videos.deleteMany({
-            where: {
-                productId: Number(id)
-            }
-        });
-        yield db_1.default.specifications.deleteMany({
-            where: {
-                productId: Number(id)
-            }
-        });
-        yield db_1.default.highlights.deleteMany({
-            where: {
-                productId: Number(id)
-            }
-        });
-        let deletedProduct = yield db_1.default.products.delete({
+        const productAuthorized = yield db_1.default.products.findFirst({
             where: {
                 id: Number(id),
                 sellerId: userId
-            },
-        }).catch(error => { console.log(error); });
-        return res.status(201).json({ message: "Product deleted succesfully ", deletedProduct });
+            }
+        });
+        if (productAuthorized) {
+            yield db_1.default.images.deleteMany({
+                where: {
+                    productId: Number(id),
+                }
+            });
+            yield db_1.default.videos.deleteMany({
+                where: {
+                    productId: Number(id)
+                }
+            });
+            yield db_1.default.specifications.deleteMany({
+                where: {
+                    productId: Number(id)
+                }
+            });
+            yield db_1.default.highlights.deleteMany({
+                where: {
+                    productId: Number(id)
+                }
+            });
+            yield db_1.default.cart.deleteMany({
+                where: {
+                    productId: Number(id)
+                }
+            });
+            yield db_1.default.favourites.deleteMany({
+                where: {
+                    productId: Number(id)
+                }
+            });
+            let deletedProduct = yield db_1.default.products.delete({
+                where: {
+                    id: Number(id),
+                    sellerId: userId
+                },
+            }).catch(error => { console.log(error); });
+            return res.status(201).json({ message: "Product deleted succesfully ", deletedProduct });
+        }
+        return res.status(401).json({ message: "You are not authorized" });
     }
     catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });

@@ -3,6 +3,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
 // import config from "../config";
 import prisma from "../db/db";
+import { serializeBigInt } from "../utils/seialize-bigint";
 const jwtConfig = { 
   sign(payload:object): string  {
     const token = jwt.sign(payload, process.env.JWT_SECRET_KEY  as string);
@@ -18,17 +19,21 @@ const jwtConfig = {
         jwt.verify(token,  process.env.JWT_SECRET_KEY   as string, async(err:any, decoded:any)=> {
           if (err) {
             res.status(401).json({ message: "You are not authorized" });
-          } else {
-            // req.user = decoded as JwtPayload | object;
+          } else { 
             const user = await prisma.user.findFirst({
               where:{
                 token
               }
             })
-            res.locals.user = user
-            console.log(user)
-            // req.user = decoded
-            next();
+            if(user){
+              res.locals.user = user 
+              next();
+            }
+            else{
+            return res.status(401).json({ message: "You are not authorized" });
+
+            }
+            
           }
         });
       } else {
@@ -53,6 +58,33 @@ const jwtConfig = {
             const user = await prisma.user.findFirst({
               where:{
                 token:token
+              },
+              include:{
+                products:{
+                  include:{
+                    images:true,
+                    videos:true,
+                    Specifications:true,
+                    productHighlights:true,
+                    favourites:true
+                  }
+                },
+                addresses:true,
+                notifications:true,
+                favourites:{
+                  include:{
+                    product:{
+                      include:{
+                        favourites:true
+                      }
+                    }                  }
+                },
+                cart:true,
+                creditCards:true,
+                digitalWallets:true,
+                bankAccounts:true,
+                recieverOrders:true,
+                senderOrders:true
               }
             })
             if(!user){
@@ -60,7 +92,7 @@ const jwtConfig = {
 
             }
 
-            return res.status(200).json({message:"User verified",user})
+            return res.status(200).json({message:"User Loggedin",user:serializeBigInt(user) })
           }
         });
       } else {

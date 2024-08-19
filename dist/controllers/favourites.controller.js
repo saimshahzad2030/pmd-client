@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeFromFavourites = exports.addToFavourites = void 0;
+exports.fetchFavourites = exports.removeFromFavourites = exports.addToFavourites = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const addToFavourites = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -21,7 +21,7 @@ const addToFavourites = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (!productId) {
             return res.status(400).json({ message: "Enter Product Id plaese" });
         }
-        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user;
+        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user.id;
         let favourite = yield db_1.default.favourites.create({
             data: {
                 userId,
@@ -42,7 +42,7 @@ const removeFromFavourites = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (!productId) {
             return res.status(400).json({ message: "Enter Product Id plaese" });
         }
-        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user;
+        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user.id;
         let productRemoved = yield db_1.default.favourites.delete({
             where: {
                 userId_productId: {
@@ -58,4 +58,31 @@ const removeFromFavourites = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.removeFromFavourites = removeFromFavourites;
+const fetchFavourites = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = res === null || res === void 0 ? void 0 : res.locals) === null || _a === void 0 ? void 0 : _a.user.id;
+        let favourites = yield db_1.default.favourites.findMany({
+            where: {
+                userId
+            },
+            include: {
+                product: {
+                    include: {
+                        images: true,
+                        Specifications: true,
+                        videos: true,
+                        productHighlights: true,
+                        favourites: true
+                    }
+                }
+            }
+        });
+        return res.status(201).json({ message: "Favourites fetched succesfully ", favourites });
+    }
+    catch (error) {
+        res.status(520).json(error);
+    }
+});
+exports.fetchFavourites = fetchFavourites;
 //# sourceMappingURL=favourites.controller.js.map

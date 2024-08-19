@@ -11,5 +11,7 @@ router.route("/address")
     .post(jwt_1.default.verifyUser, address_controller_1.addNewAddress)
     .delete(jwt_1.default.verifyUser, address_controller_1.deleteAddress)
     .patch(jwt_1.default.verifyUser, address_controller_1.updateAddress);
+router.route("/address-shipping")
+    .patch(jwt_1.default.verifyUser, address_controller_1.updateShippingAddress);
 exports.default = router;
 //# sourceMappingURL=address.routes.js.map

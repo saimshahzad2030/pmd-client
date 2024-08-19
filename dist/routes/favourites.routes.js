@@ -9,6 +9,7 @@ const favourites_controller_1 = require("../controllers/favourites.controller");
 const router = (0, express_1.Router)();
 router.route("/favourites")
     .post(jwt_1.default.verifyUser, favourites_controller_1.addToFavourites)
-    .delete(jwt_1.default.verifyUser, favourites_controller_1.removeFromFavourites);
+    .delete(jwt_1.default.verifyUser, favourites_controller_1.removeFromFavourites)
+    .get(jwt_1.default.verifyUser, favourites_controller_1.fetchFavourites);
 exports.default = router;
 //# sourceMappingURL=favourites.routes.js.map

@@ -16,6 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 // import config from "../config";
 const db_1 = __importDefault(require("../db/db"));
+const seialize_bigint_1 = require("../utils/seialize-bigint");
 const jwtConfig = {
     sign(payload) {
         const token = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET_KEY);
@@ -33,16 +34,18 @@ const jwtConfig = {
                         res.status(401).json({ message: "You are not authorized" });
                     }
                     else {
-                        // req.user = decoded as JwtPayload | object;
                         const user = yield db_1.default.user.findFirst({
                             where: {
                                 token
                             }
                         });
-                        res.locals.user = user;
-                        console.log(user);
-                        // req.user = decoded
-                        next();
+                        if (user) {
+                            res.locals.user = user;
+                            next();
+                        }
+                        else {
+                            return res.status(401).json({ message: "You are not authorized" });
+                        }
                     }
                 }));
             }
@@ -70,12 +73,40 @@ const jwtConfig = {
                         const user = yield db_1.default.user.findFirst({
                             where: {
                                 token: token
+                            },
+                            include: {
+                                products: {
+                                    include: {
+                                        images: true,
+                                        videos: true,
+                                        Specifications: true,
+                                        productHighlights: true,
+                                        favourites: true
+                                    }
+                                },
+                                addresses: true,
+                                notifications: true,
+                                favourites: {
+                                    include: {
+                                        product: {
+                                            include: {
+                                                favourites: true
+                                            }
+                                        }
+                                    }
+                                },
+                                cart: true,
+                                creditCards: true,
+                                digitalWallets: true,
+                                bankAccounts: true,
+                                recieverOrders: true,
+                                senderOrders: true
                             }
                         });
                         if (!user) {
                             return res.status(401).json({ message: "You are not authorized" });
                         }
-                        return res.status(200).json({ message: "User verified", user });
+                        return res.status(200).json({ message: "User Loggedin", user: (0, seialize_bigint_1.serializeBigInt)(user) });
                     }
                 }));
             }

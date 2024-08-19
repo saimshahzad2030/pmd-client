@@ -13,7 +13,16 @@ export const addNewCard = async (req: Request, res: Response) => {
         }
          
         const userId = res?.locals?.user?.id;
-        
+        let exist = await prisma.creditCards.findFirst({
+            where:{ 
+                cardNumber, 
+                nameOnCard,
+            }
+             
+        }).catch(error=>{console.log(error)})
+        if(exist){
+            return res.status(400).json({message:"Already Exist"})
+        }
         let newCreditCard = await prisma.creditCards.create({
             data: { 
                 userId,
