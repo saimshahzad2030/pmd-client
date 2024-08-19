@@ -1,1 +1,0 @@
-{"version":3,"file":"shipping.routes.js","sourceRoot":"","sources":["../../src/routes/shipping.routes.ts"],"names":[],"mappings":";;;;;AAAA,qCAAiC;AACjC,4DAA0C;AAC1C,4EAAgG;AAEhG,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAA;AAEvB,MAAM,CAAC,KAAK,CAAC,WAAW,CAAC;KACpB,GAAG,CAAC,aAAS,CAAC,UAAU,EAAC,oCAAc,CAAC;KACxC,KAAK,CAAC,aAAS,CAAC,UAAU,EAAC,gDAA0B,CAAC,CAAA;AAG3D,kBAAe,MAAM,CAAC"}
