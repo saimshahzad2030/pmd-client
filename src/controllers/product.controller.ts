@@ -124,7 +124,7 @@ export const fetchSingleProduct = async (req: Request, res: Response) => {
     try {
 
         const { id } = req.query;
-        console.log(id)
+         
         const product = await prisma.products.findFirst({
             where: {
                 id: Number(id)
@@ -162,6 +162,32 @@ export const fetchSingleProduct = async (req: Request, res: Response) => {
             }
         })
         res.status(200).json({ message: 'Product fetched', product, relatedProducts, productReview })
+    } catch (error) {
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+};
+
+export const fetchSingleProductByType = async (req: Request, res: Response) => {
+    try {
+
+        const { type } = req.query;
+        
+         
+        const relatedProducts = await prisma.products.findMany({
+            where: {
+                 
+                metalType: type as MetalType
+            },
+            include: {
+                images: true,
+                Specifications: true,
+                productHighlights: true,
+                videos: true,
+                favourites: true
+            }
+        })
+        
+        res.status(200).json({ message: 'Product fetched',  relatedProducts })
     } catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
     }

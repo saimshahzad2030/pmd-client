@@ -17,5 +17,7 @@ router.route("/specific-product")
     .get(product_controller_1.fetchSpecificProducts);
 router.route("/single-product")
     .get(product_controller_1.fetchSingleProduct);
+router.route("/single-product-by-type")
+    .get(product_controller_1.fetchSingleProductByType);
 exports.default = router;
 //# sourceMappingURL=product.routes.js.map

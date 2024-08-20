@@ -53,10 +53,6 @@ app.use('/api', shipping_routes_1.default);
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // await bucket.makePublic();
-        // bucket.upload('D:/office/pmd-server/src/uploads/DK1A2226.JPG', {
-        //   destination: 'uploads/file2.jpg'
-        // });
         const users = yield db_1.default.user.findMany({
             include: {
                 favourites: {

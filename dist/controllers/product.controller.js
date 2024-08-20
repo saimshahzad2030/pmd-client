@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.fetchSingleProduct = exports.addProduct = void 0;
+exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.fetchSingleProductByType = exports.fetchSingleProduct = exports.addProduct = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const upload_file_1 = require("../services/upload-file");
 const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -105,7 +105,6 @@ exports.addProduct = addProduct;
 const fetchSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.query;
-        console.log(id);
         const product = yield db_1.default.products.findFirst({
             where: {
                 id: Number(id)
@@ -148,6 +147,28 @@ const fetchSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.fetchSingleProduct = fetchSingleProduct;
+const fetchSingleProductByType = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { type } = req.query;
+        const relatedProducts = yield db_1.default.products.findMany({
+            where: {
+                metalType: type
+            },
+            include: {
+                images: true,
+                Specifications: true,
+                productHighlights: true,
+                videos: true,
+                favourites: true
+            }
+        });
+        res.status(200).json({ message: 'Product fetched', relatedProducts });
+    }
+    catch (error) {
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+});
+exports.fetchSingleProductByType = fetchSingleProductByType;
 // export const fetchRelatedProducts = async (req: Request, res: Response) => {
 //     try {
 //         const {metalType} = req.query; 
