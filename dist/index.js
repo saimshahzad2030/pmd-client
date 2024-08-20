@@ -25,6 +25,7 @@ const product_routes_1 = __importDefault(require("./routes/product.routes"));
 const cart_routes_1 = __importDefault(require("./routes/cart.routes"));
 const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const shipping_routes_1 = __importDefault(require("./routes/shipping.routes"));
+const query_routes_1 = __importDefault(require("./routes/query.routes"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const seialize_bigint_1 = require("./utils/seialize-bigint");
@@ -49,6 +50,7 @@ app.use('/api', cart_routes_1.default);
 app.use('/api', order_routes_1.default);
 app.use('/api', order_routes_1.default);
 app.use('/api', shipping_routes_1.default);
+app.use('/api', query_routes_1.default);
 // const port = 3000;
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {

@@ -11,6 +11,7 @@ import productRoutes from './routes/product.routes'
 import cartRoutes from './routes/cart.routes'
 import orderRoutes from './routes/order.routes'
 import shippingRoutes from './routes/shipping.routes'
+import queryRoutes from './routes/query.routes'
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import { serializeBigInt } from "./utils/seialize-bigint";
@@ -38,6 +39,7 @@ app.use('/api', cartRoutes)
 app.use('/api', orderRoutes)
 app.use('/api', orderRoutes)
 app.use('/api', shippingRoutes)
+app.use('/api', queryRoutes)
 // const port = 3000;
 
 const port = process.env.PORT || 3000;

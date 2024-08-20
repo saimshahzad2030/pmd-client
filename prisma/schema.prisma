@@ -51,6 +51,7 @@ model User {
   senderOrders             Order[]                 @relation("sender")
   productReviews           ProductReviews[]
   websiteReviews           WebsiteReviews[]
+  queries                  Query[]
 }
 
 model Otp {
@@ -268,4 +269,13 @@ model WebsiteReviews {
   createdAt DateTime @default(now())
   review    String
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model Query {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  email  String
+  phone  BigInt
+  query  String
+  user   User   @relation(fields: [userId], references: [id])
 }
