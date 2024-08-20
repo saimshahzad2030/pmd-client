@@ -5,13 +5,12 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "nodemon src/index.ts",
-    "build": "rimraf dist && prisma generate && tsc",
+    "build": " prisma generate && tsc",
     "ts.check": "tsc --project tsconfig.json",
     "add-build": "git add dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "pre-commit": [
-    "ts.check",
     "build",
     "add-build"
   ],
