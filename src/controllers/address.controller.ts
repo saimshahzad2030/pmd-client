@@ -1,6 +1,6 @@
 import { Request, Response } from "express"; 
 import prisma from "../db/db";
-import { addNewAddressType, updateNewAddressType, deleteAddressType } from 'req'; 
+import { addNewAddressType, updateNewAddressType, deleteAddressType } from '../types/req'; 
 import { ShippingAddresstype } from "@prisma/client";
 
 

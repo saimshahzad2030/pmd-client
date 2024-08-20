@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../db/db";
-import { productReviewType, websiteReviewType } from "req";
+import { productReviewType, websiteReviewType } from '../types/req';
 
 
 export const addToCart = async (req: Request, res: Response) => {

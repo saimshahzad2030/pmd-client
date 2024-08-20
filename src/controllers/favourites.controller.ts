@@ -1,6 +1,6 @@
 import { Request, Response } from "express"; 
 import prisma from "../db/db";
-import { addToFavouritesType } from "req";
+import { addToFavouritesType } from "../types/req";
 
 
 export const addToFavourites = async (req: Request, res: Response) => {

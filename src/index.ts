@@ -43,10 +43,7 @@ app.use('/api', shippingRoutes)
 const port = process.env.PORT || 3000;
 app.get('/', async (req: Request, res: Response) => {
   try {
-    // await bucket.makePublic();
-    // bucket.upload('D:/office/pmd-server/src/uploads/DK1A2226.JPG', {
-    //   destination: 'uploads/file2.jpg'
-    // });
+ 
 
     const users = await prisma.user.findMany({
       include: {

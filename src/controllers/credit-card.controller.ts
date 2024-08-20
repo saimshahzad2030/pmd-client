@@ -1,6 +1,6 @@
 import { Request, Response } from "express"; 
 import prisma from "../db/db";
-import { addNewCreditCardType } from 'req'; 
+import { addNewCreditCardType } from '../types/req'; 
 import { serializeBigInt } from "../utils/seialize-bigint";
  
 

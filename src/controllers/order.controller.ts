@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../db/db";
-import {  placeOrderType } from 'req';  
+import {  placeOrderType } from '../types/req';  
  import { stripe } from "../stripe/stripe";
  import config from "../config";
  

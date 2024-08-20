@@ -1,6 +1,6 @@
 import { Request, Response } from "express"; 
 import prisma from "../db/db";
-import {  addNewDigitalWalletType, deleteAddressType } from 'req';
+import {  addNewDigitalWalletType, deleteAddressType } from '../types/req';
 import { error } from 'console';
 import { serializeBigInt } from "../utils/seialize-bigint";
  
