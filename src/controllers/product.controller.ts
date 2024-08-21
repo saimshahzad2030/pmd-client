@@ -217,15 +217,15 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
 
 export const fetchProducts = async (req: Request, res: Response) => {
     try {
-
-
+ 
         const products = await prisma.products.findMany({
             include: {
                 images: true,
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
+                cart:true
             }
         })
         res.status(200).json({ message: 'Products fetched', products })

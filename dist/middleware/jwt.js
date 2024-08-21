@@ -73,40 +73,104 @@ const jwtConfig = {
                         const user = yield db_1.default.user.findFirst({
                             where: {
                                 token: token
-                            },
-                            include: {
-                                products: {
-                                    include: {
-                                        images: true,
-                                        videos: true,
-                                        Specifications: true,
-                                        productHighlights: true,
-                                        favourites: true
-                                    }
-                                },
-                                addresses: true,
-                                notifications: true,
-                                favourites: {
-                                    include: {
-                                        product: {
-                                            include: {
-                                                favourites: true
-                                            }
-                                        }
-                                    }
-                                },
-                                cart: true,
-                                creditCards: true,
-                                digitalWallets: true,
-                                bankAccounts: true,
-                                recieverOrders: true,
-                                senderOrders: true
                             }
                         });
                         if (!user) {
                             return res.status(401).json({ message: "You are not authorized" });
                         }
                         return res.status(200).json({ message: "User Loggedin", user: (0, seialize_bigint_1.serializeBigInt)(user) });
+                    }
+                }));
+            }
+            else {
+                res.status(401).json({ message: "You are not authorized" });
+            }
+        }
+        catch (error) {
+            // console.log(err);
+            res.status(520).send(error);
+        }
+    },
+    fetchUserDetails(req, res) {
+        var _a;
+        const authHeader = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
+        try {
+            if (authHeader) {
+                const [bearer, token] = authHeader.split(" ");
+                const products = req.query.products === 'true';
+                const addresses = req.query.addresses === 'true';
+                const notifications = req.query.notifications === 'true';
+                const favourites = req.query.favourites === 'true';
+                const cart = req.query.cart === 'true';
+                const creditCards = req.query.creditCards === 'true';
+                const digitalWallets = req.query.digitalWallets === 'true';
+                const bankAccounts = req.query.bankAccounts === 'true';
+                const recieverOrders = req.query.recieverOrders === 'true';
+                const senderOrders = req.query.senderOrders === 'true';
+                jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        res.status(401).json({ message: "You are not authorized" });
+                    }
+                    else {
+                        // req.user = decoded as JwtPayload | object;
+                        const user = yield db_1.default.user.findFirst({
+                            where: {
+                                token: token
+                            },
+                            include: {
+                                products: products && {
+                                    include: {
+                                        images: products,
+                                        videos: products,
+                                        Specifications: products,
+                                        productHighlights: products,
+                                        favourites: products,
+                                    }
+                                },
+                                addresses: addresses,
+                                notifications: notifications,
+                                favourites: favourites && {
+                                    include: {
+                                        product: {
+                                            include: {
+                                                images: favourites,
+                                                videos: favourites,
+                                                Specifications: favourites,
+                                                productHighlights: favourites,
+                                                favourites: favourites,
+                                                cart: favourites
+                                            }
+                                        }
+                                    }
+                                },
+                                cart: cart,
+                                creditCards: creditCards,
+                                digitalWallets: digitalWallets,
+                                bankAccounts: bankAccounts,
+                                recieverOrders: recieverOrders && { include: {
+                                        Shippings: {
+                                            include: {
+                                                ShippingNotifications: true
+                                            }
+                                        },
+                                        reciever: true,
+                                        sender: true
+                                    } },
+                                senderOrders: senderOrders && { include: {
+                                        Shippings: {
+                                            include: {
+                                                ShippingNotifications: true
+                                            }
+                                        },
+                                        reciever: true,
+                                        sender: true
+                                    } }
+                            }
+                        });
+                        if (!user) {
+                            return res.status(401).json({ message: "You are not authorized" });
+                        }
+                        return res.status(200).json({ message: "Details Fetched", user: (0, seialize_bigint_1.serializeBigInt)(user) });
                     }
                 }));
             }

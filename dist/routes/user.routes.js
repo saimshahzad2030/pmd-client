@@ -30,5 +30,7 @@ router.route('/user/otp')
     .patch(user_controller_1.changePasswordOnForget);
 router.route('/business-details')
     .get(jwt_1.default.verifyUser, user_controller_1.getSellerAccountDetails);
+router.route('/user-details')
+    .get(jwt_1.default.fetchUserDetails);
 exports.default = router;
 //# sourceMappingURL=user.routes.js.map

@@ -197,7 +197,8 @@ const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
+                cart: true
             }
         });
         res.status(200).json({ message: 'Products fetched', products });

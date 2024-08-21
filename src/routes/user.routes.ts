@@ -29,4 +29,7 @@ router.route('/user/otp')
 
 router.route('/business-details')
     .get(jwtConfig.verifyUser, getSellerAccountDetails)
+
+    router.route('/user-details')
+    .get(jwtConfig.fetchUserDetails)
 export default router;
