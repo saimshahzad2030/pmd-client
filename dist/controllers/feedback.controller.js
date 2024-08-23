@@ -59,6 +59,9 @@ const addWebAppFeedback = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 review,
                 userId: userId,
                 ratings
+            },
+            include: {
+                user: true
             }
         });
         return res.status(201).json({ message: "Successfully added new Review ", feedback });
