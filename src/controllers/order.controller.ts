@@ -108,7 +108,18 @@ export const addNewOrder = async (req: Request, res: Response) => {
                 }
 
             }
-        }); 
+        }) 
+            await prisma.products.update({
+                where:{
+                    id:Number(productId)
+                },
+                data:{
+                    available:{
+                        decrement:quantity
+                    }
+                }
+            }) 
+         
         console.log(newShipping)
 
         res.status(201).json({ message: "Order placed successfully",newShipping,clientSecret: paymentIntent});

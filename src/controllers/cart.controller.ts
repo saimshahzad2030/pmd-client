@@ -14,8 +14,8 @@ export const addToCart = async (req: Request, res: Response) => {
         const product = await prisma.products.findFirst({
             where: {
                 id: Number(id),
-                sellerId:{
-                    not:userId
+                sellerId: {
+                    not: userId
                 }
             }
         })
@@ -23,7 +23,7 @@ export const addToCart = async (req: Request, res: Response) => {
             let productAlreadyExist = await prisma.cart.findFirst({
                 where: {
                     productId: Number(id),
-                    userId:userId
+                    userId: userId
                 }
             })
             console.log(productAlreadyExist)
@@ -34,7 +34,7 @@ export const addToCart = async (req: Request, res: Response) => {
             }
             let cartItem = await prisma.cart.create({
                 data: {
-                    productId:Number(id),
+                    productId: Number(id),
                     userId
 
                 }
@@ -67,7 +67,7 @@ export const removeFromCart = async (req: Request, res: Response) => {
                 userId
             }
 
-        }).catch(error => { console.log(error) })
+        })
 
         return res.status(201).json({ message: "product removed from cart succesfully ", deletedProduct })
 
@@ -82,26 +82,26 @@ export const removeFromCart = async (req: Request, res: Response) => {
 
 export const fetchCartItems = async (req: Request, res: Response) => {
     try {
-         
+
         const userId = Number(res.locals.user.id);
 
         let cartItems = await prisma.cart.findMany({
             where: {
-                userId 
+                userId
             },
-            include:{
-                product:{
-                    include:{
-                        images:true,
-                        Specifications:true,
-                        productHighlights:true,
-                        videos:true
+            include: {
+                product: {
+                    include: {
+                        images: true,
+                        Specifications: true,
+                        productHighlights: true,
+                        videos: true
                     }
                 },
-                user:true
+                user: true
             }
 
-        }) 
+        })
 
         return res.status(201).json({ message: "Cart item fetched succesfully", cartItems })
 

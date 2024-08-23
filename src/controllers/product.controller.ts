@@ -19,39 +19,39 @@ interface Files {
 export const addProduct = async (req: Request, res: Response) => {
     try {
         const { description, specifications, name, available, price, productDetails, productHighlights, metalType } = req.body as productReqType;
-  
 
-        if (!description ) {
+
+        if (!description) {
             return res.status(400).json({ message: "Enter Description" });
         }
-        if( !specifications){
+        if (!specifications) {
             return res.status(400).json({ message: "Enter specifications" });
 
         }
-        if( !name){
+        if (!name) {
             return res.status(400).json({ message: "Enter name" });
 
         }
-        if( !available){
+        if (!available) {
             return res.status(400).json({ message: "Enter available" });
 
         }
-        if( !price){
+        if (!price) {
             return res.status(400).json({ message: "Enter specifications" });
 
         }
-        if( !productDetails){
+        if (!productDetails) {
             return res.status(400).json({ message: "Enter productDetails" });
 
         }
-        if( !productHighlights){
+        if (!productHighlights) {
             return res.status(400).json({ message: "Enter productHighlights" });
 
         }
-        if( !metalType){
+        if (!metalType) {
             return res.status(400).json({ message: "Enter metalType" });
 
-        } 
+        }
         if (!req.files) {
             res.status(400).send('No file uploaded.');
             return;
@@ -101,10 +101,10 @@ export const addProduct = async (req: Request, res: Response) => {
                 },
                 productHighlights: {
                     create: Array.isArray(productHighlights)
-                    ? productHighlights.map((highlight) => ({
-                        highlight: highlight
-                    }))
-                    : [{ highlight: productHighlights }]
+                        ? productHighlights.map((highlight) => ({
+                            highlight: highlight
+                        }))
+                        : [{ highlight: productHighlights }]
                 }
 
             }
@@ -124,7 +124,7 @@ export const fetchSingleProduct = async (req: Request, res: Response) => {
     try {
 
         const { id } = req.query;
-         
+
         const product = await prisma.products.findFirst({
             where: {
                 id: Number(id)
@@ -171,11 +171,11 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
     try {
 
         const { type } = req.query;
-        
-         
+
+
         const relatedProducts = await prisma.products.findMany({
             where: {
-                 
+
                 metalType: type as MetalType
             },
             include: {
@@ -186,8 +186,8 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
                 favourites: true
             }
         })
-        
-        res.status(200).json({ message: 'Product fetched',  relatedProducts })
+
+        res.status(200).json({ message: 'Product fetched', relatedProducts })
     } catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
     }
@@ -217,7 +217,6 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
 
 export const fetchProducts = async (req: Request, res: Response) => {
     try {
- 
         const products = await prisma.products.findMany({
             include: {
                 images: true,
@@ -225,7 +224,7 @@ export const fetchProducts = async (req: Request, res: Response) => {
                 productHighlights: true,
                 videos: true,
                 favourites: true,
-                cart:true
+                cart: true
             }
         })
         res.status(200).json({ message: 'Products fetched', products })

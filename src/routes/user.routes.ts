@@ -6,7 +6,7 @@ import multer from 'multer';
 
 const router = Router()
 // const userRoutes = e
-const upload = multer({ storage: multer.memoryStorage() }); 
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.route("/user")
     .post(createUser)
@@ -15,14 +15,15 @@ router.route("/user")
     .get(jwtConfig.authGuard);
 router.route("/user/login")
     .post(loginUser)
+    .patch(jwtConfig.logOut)
 router.route("/user-info")
-    .patch(jwtConfig.verifyUser,changeInfo)
+    .patch(jwtConfig.verifyUser, changeInfo)
 router.route('/user/email')
     .post(sendOtp)
 router.route("/user/admin")
     .get(jwtConfig.verifyUser, getUsers);
 router.route('/edit-profile')
-    .patch(jwtConfig.verifyUser,upload.single('image'),updateProfile)
+    .patch(jwtConfig.verifyUser, upload.single('image'), updateProfile)
 router.route('/user/otp')
     .post(verifyOtp)
     .patch(changePasswordOnForget);
@@ -30,6 +31,6 @@ router.route('/user/otp')
 router.route('/business-details')
     .get(jwtConfig.verifyUser, getSellerAccountDetails)
 
-    router.route('/user-details')
+router.route('/user-details')
     .get(jwtConfig.fetchUserDetails)
 export default router;

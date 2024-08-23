@@ -91,6 +91,16 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             }
         });
+        yield db_1.default.products.update({
+            where: {
+                id: Number(productId)
+            },
+            data: {
+                available: {
+                    decrement: quantity
+                }
+            }
+        });
         console.log(newShipping);
         res.status(201).json({ message: "Order placed successfully", newShipping, clientSecret: paymentIntent });
         // res.status(201).json({ message: "Product added successfully", imageUrls,videoUrls,specifications,productHighlights });

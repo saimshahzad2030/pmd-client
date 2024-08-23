@@ -68,7 +68,7 @@ const removeFromCart = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 id: Number(id),
                 userId
             }
-        }).catch(error => { console.log(error); });
+        });
         return res.status(201).json({ message: "product removed from cart succesfully ", deletedProduct });
     }
     catch (error) {

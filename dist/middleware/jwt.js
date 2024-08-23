@@ -29,9 +29,10 @@ const jwtConfig = {
         try {
             if (authHeader) {
                 const [bearer, token] = authHeader.split(" ");
+                console.log(token);
                 jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
                     if (err) {
-                        res.status(401).json({ message: "You are not authorized" });
+                        res.status(401).json({ message: "You need to login first" });
                     }
                     else {
                         const user = yield db_1.default.user.findFirst({
@@ -44,13 +45,13 @@ const jwtConfig = {
                             next();
                         }
                         else {
-                            return res.status(401).json({ message: "You are not authorized" });
+                            return res.status(401).json({ message: "You need to login first" });
                         }
                     }
                 }));
             }
             else {
-                res.status(401).json({ message: "You are not authorized" });
+                res.status(401).json({ message: "You need to login first" });
             }
         }
         catch (error) {
@@ -69,16 +70,44 @@ const jwtConfig = {
                         res.status(401).json({ message: "You are not authorized" });
                     }
                     else {
-                        // req.user = decoded as JwtPayload | object;
-                        const user = yield db_1.default.user.findFirst({
+                        return res.status(200).json({ message: "User Authorized" });
+                    }
+                }));
+            }
+            else {
+                res.status(401).json({ message: "You are not authorized" });
+            }
+        }
+        catch (error) {
+            // console.log(err);
+            res.status(520).send(error);
+        }
+    },
+    logOut(req, res) {
+        var _a;
+        const authHeader = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
+        try {
+            if (authHeader) {
+                const [bearer, token] = authHeader.split(" ");
+                jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                    if (err) {
+                        res.status(401).json({ message: "You are not authorized" });
+                    }
+                    else {
+                        const fetchUser = yield db_1.default.user.findFirst({
                             where: {
                                 token: token
                             }
                         });
-                        if (!user) {
-                            return res.status(401).json({ message: "You are not authorized" });
-                        }
-                        return res.status(200).json({ message: "User Loggedin", user: (0, seialize_bigint_1.serializeBigInt)(user) });
+                        const updatedUser = yield db_1.default.user.update({
+                            where: {
+                                id: fetchUser.id
+                            },
+                            data: {
+                                token: null
+                            }
+                        });
+                        return res.status(200).json({ message: "User Logged out", updatedUser });
                     }
                 }));
             }
@@ -147,7 +176,8 @@ const jwtConfig = {
                                 creditCards: creditCards,
                                 digitalWallets: digitalWallets,
                                 bankAccounts: bankAccounts,
-                                recieverOrders: recieverOrders && { include: {
+                                recieverOrders: recieverOrders && {
+                                    include: {
                                         Shippings: {
                                             include: {
                                                 ShippingNotifications: true
@@ -155,8 +185,10 @@ const jwtConfig = {
                                         },
                                         reciever: true,
                                         sender: true
-                                    } },
-                                senderOrders: senderOrders && { include: {
+                                    }
+                                },
+                                senderOrders: senderOrders && {
+                                    include: {
                                         Shippings: {
                                             include: {
                                                 ShippingNotifications: true
@@ -164,7 +196,8 @@ const jwtConfig = {
                                         },
                                         reciever: true,
                                         sender: true
-                                    } }
+                                    }
+                                }
                             }
                         });
                         if (!user) {

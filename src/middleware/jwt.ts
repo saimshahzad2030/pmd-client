@@ -4,6 +4,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken'
 // import config from "../config";
 import prisma from "../db/db";
 import { serializeBigInt } from "../utils/seialize-bigint";
+import { userInfo } from "os";
 const jwtConfig = {
   sign(payload: object): string {
     const token = jwt.sign(payload, process.env.JWT_SECRET_KEY as string);
@@ -16,9 +17,10 @@ const jwtConfig = {
     try {
       if (authHeader) {
         const [bearer, token] = authHeader.split(" ");
+        console.log(token)
         jwt.verify(token, process.env.JWT_SECRET_KEY as string, async (err: any, decoded: any) => {
           if (err) {
-            res.status(401).json({ message: "You are not authorized" });
+            res.status(401).json({ message: "You need to login first" });
           } else {
             const user = await prisma.user.findFirst({
               where: {
@@ -30,10 +32,34 @@ const jwtConfig = {
               next();
             }
             else {
-              return res.status(401).json({ message: "You are not authorized" });
+              return res.status(401).json({ message: "You need to login first" });
 
             }
 
+          }
+        });
+      } else {
+        res.status(401).json({ message: "You need to login first" });
+      }
+    } catch (error) {
+      // console.log(err);
+      res.status(520).send(error);
+    }
+  },
+
+  authGuard(req: Request, res: Response) {
+    const authHeader = req?.headers?.authorization;
+
+    try {
+      if (authHeader) {
+        const [bearer, token] = authHeader.split(" ");
+
+        jwt.verify(token, process.env.JWT_SECRET_KEY as string, async (err: any, decoded: any) => {
+          if (err) {
+            res.status(401).json({ message: "You are not authorized" });
+          } else {
+
+            return res.status(200).json({ message: "User Authorized" })
           }
         });
       } else {
@@ -44,31 +70,32 @@ const jwtConfig = {
       res.status(520).send(error);
     }
   },
-  
-  authGuard(req: Request, res: Response) {
+
+  logOut(req: Request, res: Response) {
     const authHeader = req?.headers?.authorization;
 
     try {
       if (authHeader) {
         const [bearer, token] = authHeader.split(" ");
-     
+
         jwt.verify(token, process.env.JWT_SECRET_KEY as string, async (err: any, decoded: any) => {
           if (err) {
             res.status(401).json({ message: "You are not authorized" });
           } else {
-            // req.user = decoded as JwtPayload | object;
-            const user = await prisma.user.findFirst({
+            const fetchUser = await prisma.user.findFirst({
               where: {
                 token: token
-              } 
-               
+              }
             })
-            if (!user) {
-              return res.status(401).json({ message: "You are not authorized" });
-
-            }
-
-            return res.status(200).json({ message: "User Loggedin", user: serializeBigInt(user) })
+            const updatedUser = await prisma.user.update({
+              where: {
+                id: fetchUser.id
+              },
+              data: {
+                token: null
+              }
+            })
+            return res.status(200).json({ message: "User Logged out", updatedUser })
           }
         });
       } else {
@@ -95,7 +122,7 @@ const jwtConfig = {
         const bankAccounts = req.query.bankAccounts === 'true';
         const recieverOrders = req.query.recieverOrders === 'true';
         const senderOrders = req.query.senderOrders === 'true';
-         
+
         jwt.verify(token, process.env.JWT_SECRET_KEY as string, async (err: any, decoded: any) => {
           if (err) {
             res.status(401).json({ message: "You are not authorized" });
@@ -112,21 +139,21 @@ const jwtConfig = {
                     videos: products,
                     Specifications: products,
                     productHighlights: products,
-                    favourites: products, 
+                    favourites: products,
 
                   }
                 },
                 addresses: addresses,
                 notifications: notifications,
-                favourites:favourites &&  {
+                favourites: favourites && {
                   include: {
                     product: {
                       include: {
                         images: favourites,
-                    videos: favourites,
-                    Specifications: favourites,
-                    productHighlights: favourites,
-                        favourites: favourites, 
+                        videos: favourites,
+                        Specifications: favourites,
+                        productHighlights: favourites,
+                        favourites: favourites,
                         cart: favourites
                       }
                     }
@@ -136,24 +163,28 @@ const jwtConfig = {
                 creditCards: creditCards,
                 digitalWallets: digitalWallets,
                 bankAccounts: bankAccounts,
-                recieverOrders: recieverOrders && {include:{
-                  Shippings:{
-                      include:{
-                          ShippingNotifications:true
+                recieverOrders: recieverOrders && {
+                  include: {
+                    Shippings: {
+                      include: {
+                        ShippingNotifications: true
                       }
-                  },
-                  reciever:true,
-                  sender:true
-              }},
-                senderOrders: senderOrders && {include:{
-                  Shippings:{
-                      include:{
-                          ShippingNotifications:true
+                    },
+                    reciever: true,
+                    sender: true
+                  }
+                },
+                senderOrders: senderOrders && {
+                  include: {
+                    Shippings: {
+                      include: {
+                        ShippingNotifications: true
                       }
-                  },
-                  reciever:true,
-                  sender:true
-              }}
+                    },
+                    reciever: true,
+                    sender: true
+                  }
+                }
               }
             })
             if (!user) {

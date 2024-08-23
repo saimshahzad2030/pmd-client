@@ -16,7 +16,8 @@ router.route("/user")
     .delete(jwt_1.default.verifyUser, user_controller_1.deleteUser)
     .get(jwt_1.default.authGuard);
 router.route("/user/login")
-    .post(user_controller_1.loginUser);
+    .post(user_controller_1.loginUser)
+    .patch(jwt_1.default.logOut);
 router.route("/user-info")
     .patch(jwt_1.default.verifyUser, user_controller_1.changeInfo);
 router.route('/user/email')

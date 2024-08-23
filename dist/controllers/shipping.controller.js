@@ -57,7 +57,7 @@ const updateShippingArrangements = (req, res) => __awaiter(void 0, void 0, void 
             },
             include: {}
         });
-        res.status(200).json({ message: 'Shipments fetched', updatedShipment });
+        res.status(200).json({ message: 'Shipment  status updated', updatedShipment });
     }
     catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
