@@ -26,9 +26,11 @@ const cart_routes_1 = __importDefault(require("./routes/cart.routes"));
 const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const shipping_routes_1 = __importDefault(require("./routes/shipping.routes"));
 const query_routes_1 = __importDefault(require("./routes/query.routes"));
+const plaid_routes_1 = __importDefault(require("./routes/plaid.routes"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const seialize_bigint_1 = require("./utils/seialize-bigint");
+const plaid_1 = require("./plaid/plaid");
 const stripe_1 = require("./stripe/stripe");
 const config_1 = __importDefault(require("./config"));
 const app = (0, express_1.default)();
@@ -51,41 +53,54 @@ app.use('/api', order_routes_1.default);
 app.use('/api', order_routes_1.default);
 app.use('/api', shipping_routes_1.default);
 app.use('/api', query_routes_1.default);
+app.use('/api', query_routes_1.default);
+app.use('/api', plaid_routes_1.default);
 // const port = 3000;
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const users = yield db_1.default.user.findMany({
+        const products = yield db_1.default.products.findMany({
             include: {
-                favourites: {
-                    include: {
-                        product: true
-                    }
-                },
-                creditCards: true,
-                bankAccounts: true,
-                digitalWallets: true,
-                products: true,
-                addresses: true,
-                notifications: true,
-                cart: {
-                    include: {
-                        product: true
-                    }
-                },
-                recieverOrders: {
-                    include: {
-                        Shippings: true
-                    }
-                },
-                senderOrders: {
-                    include: {
-                        Shippings: true
-                    }
-                }
-            },
+                images: true,
+                Specifications: true,
+                productHighlights: true,
+                videos: true,
+                favourites: true,
+                cart: true
+            }
         });
-        res.json({ users: (0, seialize_bigint_1.serializeBigInt)(users), message: 'Fetched successfully' });
+        res.status(200).json({ message: 'Products fetched', products: (0, seialize_bigint_1.serializeBigInt)(products) });
+        // const users = await prisma.user.findMany({
+        //   include: {
+        //     favourites: {
+        //       include: {
+        //         product: true
+        //       }
+        //     },
+        //     creditCards: true,
+        //     bankAccounts: true,
+        //     digitalWallets: true,
+        //     products: true,
+        //     addresses: true,
+        //     notifications: true,
+        //     cart: {
+        //       include: {
+        //         product: true
+        //       }
+        //     },
+        //     recieverOrders: {
+        //       include: {
+        //         Shippings: true
+        //       }
+        //     },
+        //     senderOrders: {
+        //       include: {
+        //         Shippings: true
+        //       }
+        //     }
+        //   },
+        // });
+        // res.json({ users: serializeBigInt(users), message: 'Fetched successfully' });
     }
     catch (error) {
         res.status(500).json({ error: error });
@@ -96,7 +111,7 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 //     const response = await client.linkTokenCreate({
 //       user: { client_user_id: req.body.userId },
 //       client_name: 'Pmm',
-//       products: [Products.Auth], 
+//       products: [Products.Auth],
 //       country_codes: [CountryCode.Us],
 //       language: 'en',
 //     });
@@ -122,11 +137,32 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 //     res.status(500).send('Internal Server Error');
 //   }
 // });
-// app.post('/api/plaid-webhook', async (req: Request, res: Response) => {
-//   const plaidEvent = req.body;
-//   console.log('Plaid webhook event:', plaidEvent); 
-//   res.status(200).send('Webhook received');
-// });
+app.post('/api/plaid-webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const plaidEvent = req.body;
+    console.log('Plaid webhook event:', plaidEvent);
+    res.status(200).send('Webhook received');
+}));
+app.get('/api/get-bank-details', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // const accessToken = req.query.access_token;  // Assume the access token is passed as a query parameter
+        // Use the access token to fetch bank account details
+        const response = yield plaid_1.client.authGet({
+            access_token: 'access-sandbox-4a2ed0f1-d583-4181-88d5-fe31ac8bd60a',
+        });
+        const accountNumbers = response.data.numbers.ach.map(account => ({
+            account_id: account.account_id,
+            account_number: account.account,
+            routing_number: account.routing,
+            wire_routing: account.wire_routing,
+        }));
+        const accountDetails = response.data.accounts; // This will give you the bank account details
+        res.json({ account_details: accountDetails, accountNumbers });
+    }
+    catch (error) {
+        console.error('Error fetching bank details:', error);
+        res.status(500).send('Internal Server Error');
+    }
+}));
 app.delete('/connected-account', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield stripe_1.stripe.accounts.del(req.body.accountId).then(() => {
@@ -471,6 +507,80 @@ app.post('/confirm-payment-wallet', (req, res) => __awaiter(void 0, void 0, void
     }
     catch (error) {
         res.status(500).json({ error: error.message });
+    }
+}));
+app.post('/abcd', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { type, details } = req.body;
+    try {
+        let paymentMethod;
+        if (type === 'card') {
+            // req.body example for card:
+            // {
+            //   "type": "card",
+            //   "details": {
+            //     "number": "4242424242424242",
+            //     "exp_month": "12",
+            //     "exp_year": "2024",
+            //     "cvc": "123"
+            //   }
+            // }
+            paymentMethod = yield stripe_1.stripe.paymentMethods.create({
+                type: 'card',
+                card: {
+                    number: details.number,
+                    exp_month: details.exp_month,
+                    exp_year: details.exp_year,
+                    cvc: details.cvc,
+                },
+            });
+        }
+        else if (type === 'bank_account') {
+            // req.body example for bank account:
+            // {
+            //   "type": "bank_account",
+            //   "details": {
+            //     "country": "US",
+            //     "currency": "usd",
+            //     "account_holder_name": "John Doe",
+            //     "account_holder_type": "individual",
+            //     "routing_number": "110000000",
+            //     "account_number": "000123456789"
+            //   }
+            // }
+            paymentMethod = yield stripe_1.stripe.paymentMethods.create({
+                type: 'us_bank_account',
+                us_bank_account: {
+                    account_holder_type: details.account_holder_type,
+                    routing_number: details.routing_number,
+                    account_number: details.account_number,
+                },
+                billing_details: {
+                    name: details.account_holder_name,
+                },
+            });
+        }
+        else if (type === 'wallet') {
+            // req.body example for wallet (e.g., Apple Pay, Google Pay):
+            // {
+            //   "type": "wallet",
+            //   "details": {
+            //     "token": "tok_visa"  // token provided by the wallet
+            //   }
+            // }
+            paymentMethod = yield stripe_1.stripe.paymentMethods.create({
+                type: 'card',
+                card: {
+                    token: details.token,
+                },
+            });
+        }
+        else {
+            return res.status(400).json({ success: false, message: 'Invalid payment method type' });
+        }
+        res.status(200).json({ success: true, paymentMethod });
+    }
+    catch (error) {
+        res.status(400).json({ success: false, error: error.message });
     }
 }));
 app.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {

@@ -134,7 +134,13 @@ export const fetchSingleProduct = async (req: Request, res: Response) => {
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
+                seller: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                    }
+                }
             }
         })
         const relatedProducts = await prisma.products.findMany({
@@ -149,7 +155,8 @@ export const fetchSingleProduct = async (req: Request, res: Response) => {
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
+
             }
         })
         const productReview = await prisma.productReviews.findMany({
@@ -217,6 +224,7 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
 
 export const fetchProducts = async (req: Request, res: Response) => {
     try {
+        console.log('sdad')
         const products = await prisma.products.findMany({
             include: {
                 images: true,
@@ -336,3 +344,41 @@ export const removeProduct = async (req: Request, res: Response) => {
 };
 
 
+export const fetchSearchedProduct = async (req: Request, res: Response) => {
+    try {
+
+        const { searchQuery } = req.query;
+        console.log(searchQuery)
+        if (typeof searchQuery !== 'string' || searchQuery.trim() === '') {
+            return res.status(400).json({ message: 'Search query is required' });
+        }
+        const products = await prisma.products.findMany({
+            where: {
+                OR: [
+                    {
+                        metalType: {
+                            in: Object.values(MetalType).filter((type) =>
+                                type.toLowerCase().includes(searchQuery.toLowerCase())
+                            ),
+                        },
+                    },
+                    { name: { contains: searchQuery, mode: 'insensitive' } },
+                    { description: { contains: searchQuery, mode: 'insensitive' } },
+                ],
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        });
+        console.log(products)
+        if (products.length > 0) {
+            return res.status(200).json({ message: 'Products fetched', products })
+
+        }
+        return res.status(404).json({ message: 'No Product Exist' })
+
+    } catch (error) {
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+};

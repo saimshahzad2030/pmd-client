@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from 'multer';
 import jwtConfig from "../middleware/jwt";
-import { addProduct, fetchProducts,   fetchSingleProduct, fetchSingleProductByType, fetchSpecificProducts, removeProduct } from "../controllers/product.controller";
+import { addProduct, fetchProducts, fetchSearchedProduct, fetchSingleProduct, fetchSingleProductByType, fetchSpecificProducts, removeProduct } from "../controllers/product.controller";
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router()
@@ -17,7 +17,9 @@ router.route("/specific-product")
 router.route("/single-product")
     .get(fetchSingleProduct)
 
-    router.route("/single-product-by-type")
+router.route("/single-product-by-type")
     .get(fetchSingleProductByType)
- 
+router.route("/search-product")
+    .get(fetchSearchedProduct)
+
 export default router;

@@ -24,34 +24,40 @@ enum ShippingAddresstype {
   NOTDEFAULT
 }
 
+enum PaymentVerified {
+  TRUE
+  FALSE
+}
+
 model User {
-  id                       Int                     @id @default(autoincrement())
-  firstName                String
-  lastName                 String
-  fullName                 String?
-  gender                   String?
-  email                    String                  @unique
-  password                 String
-  imageUrl                 String?
-  createdAt                DateTime                @default(now())
-  updatedAt                DateTime                @updatedAt
-  dateOfBirth              DateTime?
-  phone                    String?                 @unique
-  token                    String?                 @db.Text
-  stripeConnectedAccountId String?                 @unique
-  notifications            ShippingNotifications[]
-  favourites               Favourites[]
-  products                 Products[]              @relation("myProducts")
-  addresses                Address[]               @relation("myAddresses")
-  creditCards              CreditCards[]
-  bankAccounts             BankAccounts[]
-  digitalWallets           DigitalWallets[]
-  cart                     Cart[]
-  recieverOrders           Order[]                 @relation("reciever")
-  senderOrders             Order[]                 @relation("sender")
-  productReviews           ProductReviews[]
-  websiteReviews           WebsiteReviews[]
-  queries                  Query[]
+  id                         Int                     @id @default(autoincrement())
+  firstName                  String
+  lastName                   String
+  fullName                   String?
+  gender                     String?
+  email                      String                  @unique
+  password                   String
+  imageUrl                   String?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  dateOfBirth                DateTime?
+  phone                      String?                 @unique
+  token                      String?                 @db.Text
+  stripeConnectedAccountId   String?                 @unique
+  buyerPaymentMethodVerified PaymentVerified         @default(FALSE)
+  notifications              ShippingNotifications[]
+  favourites                 Favourites[]
+  products                   Products[]              @relation("myProducts")
+  addresses                  Address[]               @relation("myAddresses")
+  creditCards                CreditCards[]
+  bankAccounts               BankAccounts[]
+  digitalWallets             DigitalWallets[]
+  cart                       Cart[]
+  recieverOrders             Order[]                 @relation("reciever")
+  senderOrders               Order[]                 @relation("sender")
+  productReviews             ProductReviews[]
+  websiteReviews             WebsiteReviews[]
+  queries                    Query[]
 }
 
 model Otp {

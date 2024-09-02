@@ -12,8 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.fetchSingleProductByType = exports.fetchSingleProduct = exports.addProduct = void 0;
+exports.fetchSearchedProduct = exports.removeProduct = exports.fetchSpecificProducts = exports.fetchProducts = exports.fetchSingleProductByType = exports.fetchSingleProduct = exports.addProduct = void 0;
 const db_1 = __importDefault(require("../db/db"));
+const req_1 = require("../types/req");
 const upload_file_1 = require("../services/upload-file");
 const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -114,7 +115,13 @@ const fetchSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
+                seller: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                    }
+                }
             }
         });
         const relatedProducts = yield db_1.default.products.findMany({
@@ -129,7 +136,7 @@ const fetchSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 Specifications: true,
                 productHighlights: true,
                 videos: true,
-                favourites: true
+                favourites: true,
             }
         });
         const productReview = yield db_1.default.productReviews.findMany({
@@ -191,6 +198,7 @@ exports.fetchSingleProductByType = fetchSingleProductByType;
 // };
 const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('sdad');
         const products = yield db_1.default.products.findMany({
             include: {
                 images: true,
@@ -302,4 +310,39 @@ const removeProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.removeProduct = removeProduct;
+const fetchSearchedProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { searchQuery } = req.query;
+        console.log(searchQuery);
+        if (typeof searchQuery !== 'string' || searchQuery.trim() === '') {
+            return res.status(400).json({ message: 'Search query is required' });
+        }
+        const products = yield db_1.default.products.findMany({
+            where: {
+                OR: [
+                    {
+                        metalType: {
+                            in: Object.values(req_1.MetalType).filter((type) => type.toLowerCase().includes(searchQuery.toLowerCase())),
+                        },
+                    },
+                    { name: { contains: searchQuery, mode: 'insensitive' } },
+                    { description: { contains: searchQuery, mode: 'insensitive' } },
+                ],
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        });
+        console.log(products);
+        if (products.length > 0) {
+            return res.status(200).json({ message: 'Products fetched', products });
+        }
+        return res.status(404).json({ message: 'No Product Exist' });
+    }
+    catch (error) {
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+    }
+});
+exports.fetchSearchedProduct = fetchSearchedProduct;
 //# sourceMappingURL=product.controller.js.map
