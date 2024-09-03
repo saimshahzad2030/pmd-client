@@ -37,7 +37,8 @@ export const exchangePublicToken = async (req: Request, res: Response) => {
                     id: userId
                 },
                 data: {
-                    buyerPaymentMethodVerified: 'TRUE'
+                    buyerPaymentMethodVerified: 'TRUE',
+                    plaidAccessToken: accessToken
                 }
             })
         }

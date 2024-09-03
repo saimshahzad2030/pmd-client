@@ -70,7 +70,15 @@ const jwtConfig = {
                         res.status(401).json({ message: "You are not authorized" });
                     }
                     else {
-                        return res.status(200).json({ message: "User Authorized" });
+                        const user = yield db_1.default.user.findFirst({
+                            where: {
+                                token
+                            }
+                        });
+                        if (user) {
+                            return res.status(200).json({ message: "User Authorized" });
+                        }
+                        return res.status(200).json({ message: "You are not authorized" });
                     }
                 }));
             }

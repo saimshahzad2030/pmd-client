@@ -44,6 +44,7 @@ model User {
   phone                      String?                 @unique
   token                      String?                 @db.Text
   stripeConnectedAccountId   String?                 @unique
+  plaidAccessToken           String?                 @unique
   buyerPaymentMethodVerified PaymentVerified         @default(FALSE)
   notifications              ShippingNotifications[]
   favourites                 Favourites[]

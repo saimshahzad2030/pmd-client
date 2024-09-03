@@ -198,7 +198,6 @@ exports.fetchSingleProductByType = fetchSingleProductByType;
 // };
 const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log('sdad');
         const products = yield db_1.default.products.findMany({
             include: {
                 images: true,
