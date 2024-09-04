@@ -9,6 +9,8 @@ import bankAccountRoutes from './routes/bank-account.routes'
 import creditCardRoutes from './routes/credit-card.routes'
 import productRoutes from './routes/product.routes'
 import cartRoutes from './routes/cart.routes'
+
+
 import orderRoutes from './routes/order.routes'
 import shippingRoutes from './routes/shipping.routes'
 import queryRoutes from './routes/query.routes'
