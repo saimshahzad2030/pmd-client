@@ -58,8 +58,16 @@ const jwtConfig = {
           if (err) {
             res.status(401).json({ message: "You are not authorized" });
           } else {
+            const user = await prisma.user.findFirst({
+              where: {
+                token
+              }
+            })
+            if (user) {
+              return res.status(200).json({ message: "User Authorized" })
 
-            return res.status(200).json({ message: "User Authorized" })
+            }
+            return res.status(200).json({ message: "You are not authorized" })
           }
         });
       } else {

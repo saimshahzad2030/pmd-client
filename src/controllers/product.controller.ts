@@ -224,7 +224,6 @@ export const fetchSingleProductByType = async (req: Request, res: Response) => {
 
 export const fetchProducts = async (req: Request, res: Response) => {
     try {
-        console.log('sdad')
         const products = await prisma.products.findMany({
             include: {
                 images: true,

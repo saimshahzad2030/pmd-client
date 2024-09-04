@@ -16,6 +16,8 @@ exports.fetchOrders = exports.addNewOrder = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const stripe_1 = require("../stripe/stripe");
 const config_1 = __importDefault(require("../config"));
+const plaid_1 = require("../plaid/plaid");
+const plaid_2 = require("plaid");
 const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -53,27 +55,129 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             }
         });
         const recieverId = Number((_a = res.locals) === null || _a === void 0 ? void 0 : _a.user.id);
+        const reciever = yield db_1.default.user.findFirst({
+            where: {
+                id: recieverId,
+            }
+        });
         const formattedOrderPlacedDate = new Date(orderPlacedDate).toISOString();
         const formattedOrderExpectedDate = new Date(orderExpectedDate).toISOString();
-        const paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-            amount: 10000,
-            currency: 'usd',
-            payment_method_types: ['card'],
-            payment_method: 'pm_card_visa',
-            confirm: true,
-            transfer_data: {
-                destination: sender.stripeConnectedAccountId,
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        let userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
+        if (Array.isArray(userIP)) {
+            userIP = userIP[0];
+        }
+        const access_token = reciever.plaidAccessToken;
+        const response = yield plaid_1.client.authGet({
+            access_token
+        });
+        const accountNumbers = response.data.numbers.ach.map(account => ({
+            account_id: account.account_id,
+            account_number: account.account,
+            routing_number: account.routing,
+            wire_routing: account.wire_routing,
+        }));
+        // console.log(response.data.item.institution_id)
+        const accountDetails = response.data.accounts; // This will give you the bank account details
+        const institutions = yield plaid_1.client.institutionsGetById({
+            institution_id: response.data.item.institution_id,
+            country_codes: [plaid_2.CountryCode.Us],
+        });
+        const bankName = institutions.data.institution.name;
+        const paymentMethodUser = yield stripe_1.stripe.paymentMethods.create({
+            type: 'us_bank_account',
+            us_bank_account: {
+                account_number: accountNumbers[0].account_number,
+                routing_number: accountNumbers[0].routing_number,
+                account_holder_type: 'individual',
+            },
+            billing_details: {
+                name: reciever.firstName,
             },
         }, {
             stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
         });
-        console.log(paymentIntent);
+        let paymentIntent;
+        if (typeof userIP === 'string') {
+            console.log('Full IP Address:', userIP);
+            if (userIP.startsWith('::ffff:')) {
+                const ipv4Address = userIP.split('::ffff:')[1];
+                console.log('IPv4 Address:', ipv4Address);
+                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                    amount: price,
+                    currency: 'usd',
+                    payment_method_types: ['us_bank_account'],
+                    payment_method: paymentMethodUser.id,
+                    mandate_data: {
+                        customer_acceptance: {
+                            type: 'online',
+                            online: {
+                                ip_address: ipv4Address,
+                                user_agent: userAgent,
+                            },
+                        },
+                    },
+                    confirm: true,
+                    transfer_data: {
+                        destination: sender.stripeConnectedAccountId,
+                    },
+                }, {
+                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                });
+            }
+            else if (userIP === '::1') {
+                // Handle the loopback address
+                console.log('IPv6 Loopback Address');
+                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                    amount: price,
+                    currency: 'usd',
+                    payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+                    payment_method: paymentMethodUser.id,
+                    mandate_data: {
+                        customer_acceptance: {
+                            type: 'online',
+                            online: {
+                                ip_address: '127.0.0.1', // Replace with the actual customer's IP address
+                                user_agent: userAgent, // Replace with the actual user's browser user agent
+                            },
+                        },
+                    },
+                    confirm: true,
+                    transfer_data: {
+                        destination: sender.stripeConnectedAccountId,
+                    },
+                }, {
+                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                });
+            }
+            else {
+                console.log('IP Address:', userIP);
+            }
+        }
+        else {
+            console.log('No IP address found');
+            return res.json({ ip: 'No IP address found' });
+        }
+        // const paymentIntent = await stripe.paymentIntents.create({
+        //     amount:10000,
+        //     currency: 'usd',
+        //     payment_method_types: ['card'],
+        // payment_method: 'pm_card_visa', 
+        // confirm:true,
+        // transfer_data: {
+        //   destination: sender.stripeConnectedAccountId,  
+        // },
+        //   },  
+        //   {
+        //     stripeAccount:config.STRIPE_ACCOUNT_ID
+        //   });  
+        //   console.log(paymentIntent)
         const newShipping = yield db_1.default.order.create({
             data: {
                 productId,
                 recieverId,
                 senderId,
-                orderExpectedDate: formattedOrderPlacedDate,
+                orderExpectedDate: formattedOrderExpectedDate,
                 orderPlacedDate: formattedOrderPlacedDate,
                 price,
                 quantity,
@@ -85,7 +189,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     create: {
                         cost: shippingCost,
                         ShippingNotifications: {
-                            create: { notificationText: "dsadasdsd", userId: recieverId }
+                            create: { notificationText: "Order Placed succesfully", userId: recieverId }
                         }
                     }
                 }
@@ -101,9 +205,8 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             }
         });
-        console.log(newShipping);
+        // return res.json({ account_details: accountDetails, accountNumbers, paymentIntent });
         res.status(201).json({ message: "Order placed successfully", newShipping, clientSecret: paymentIntent });
-        // res.status(201).json({ message: "Product added successfully", imageUrls,videoUrls,specifications,productHighlights });
     }
     catch (error) {
         console.log(error);

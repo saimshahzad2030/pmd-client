@@ -50,7 +50,8 @@ const exchangePublicToken = (req, res) => __awaiter(void 0, void 0, void 0, func
                     id: userId
                 },
                 data: {
-                    buyerPaymentMethodVerified: 'TRUE'
+                    buyerPaymentMethodVerified: 'TRUE',
+                    plaidAccessToken: accessToken
                 }
             });
         }

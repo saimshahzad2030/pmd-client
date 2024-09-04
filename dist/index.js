@@ -32,6 +32,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const seialize_bigint_1 = require("./utils/seialize-bigint");
 const plaid_1 = require("./plaid/plaid");
 const stripe_1 = require("./stripe/stripe");
+const plaid_2 = require("plaid");
 const config_1 = __importDefault(require("./config"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
@@ -52,7 +53,6 @@ app.use('/api', cart_routes_1.default);
 app.use('/api', order_routes_1.default);
 app.use('/api', order_routes_1.default);
 app.use('/api', shipping_routes_1.default);
-app.use('/api', query_routes_1.default);
 app.use('/api', query_routes_1.default);
 app.use('/api', plaid_routes_1.default);
 // const port = 3000;
@@ -142,12 +142,44 @@ app.post('/api/plaid-webhook', (req, res) => __awaiter(void 0, void 0, void 0, f
     console.log('Plaid webhook event:', plaidEvent);
     res.status(200).send('Webhook received');
 }));
+// app.get('/get-browser-info', (req, res) => {
+//   const userAgent = req.headers['user-agent'] || 'Unknown';
+//   let userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
+//   // Check if userIP is an array
+//   if (Array.isArray(userIP)) {
+//     userIP = userIP[0];
+//   }
+//   // Ensure userIP is a string
+//   if (typeof userIP === 'string') {
+//     console.log('Full IP Address:', userIP);
+//     // Check if the IP is an IPv6-mapped IPv4 address
+//     if (userIP.startsWith('::ffff:')) {
+//       const ipv4Address = userIP.split('::ffff:')[1];
+//       console.log('IPv4 Address:', ipv4Address);
+//       res.json({ ip: ipv4Address, userAgent });
+//     } else if (userIP === '::1') {
+//       // Handle the loopback address
+//       console.log('IPv6 Loopback Address');
+//       res.json({ ip: '127.0.0.1', userAgent });
+//     } else {
+//       console.log('IP Address:', userIP);
+//       res.json({ ip: userIP, userAgent });
+//     }
+//   } else {
+//     console.log('No IP address found');
+//     res.json({ ip: 'No IP address found' });
+//   }
+// });
 app.get('/api/get-bank-details', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const accessToken = req.query.access_token;  // Assume the access token is passed as a query parameter
-        // Use the access token to fetch bank account details
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        let userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
+        if (Array.isArray(userIP)) {
+            userIP = userIP[0];
+        }
+        const access_token = 'access-sandbox-48077355-cbe0-414d-a2c5-64a3133e8e12';
         const response = yield plaid_1.client.authGet({
-            access_token: 'access-sandbox-4a2ed0f1-d583-4181-88d5-fe31ac8bd60a',
+            access_token
         });
         const accountNumbers = response.data.numbers.ach.map(account => ({
             account_id: account.account_id,
@@ -155,8 +187,91 @@ app.get('/api/get-bank-details', (req, res) => __awaiter(void 0, void 0, void 0,
             routing_number: account.routing,
             wire_routing: account.wire_routing,
         }));
+        // console.log(response.data.item.institution_id)
         const accountDetails = response.data.accounts; // This will give you the bank account details
-        res.json({ account_details: accountDetails, accountNumbers });
+        const institutions = yield plaid_1.client.institutionsGetById({
+            institution_id: response.data.item.institution_id,
+            country_codes: [plaid_2.CountryCode.Us],
+        });
+        // Extract bank name from institutions response
+        const bankName = institutions.data.institution.name;
+        console.log("bankName", bankName);
+        const paymentMethod = yield stripe_1.stripe.paymentMethods.create({
+            type: 'us_bank_account', // Specify the type of payment method
+            us_bank_account: {
+                account_number: '000123456789', // Replace with actual account number
+                routing_number: '110000000', // Replace with actual routing number
+                account_holder_type: 'individual', // or 'company' based on the account
+            },
+            billing_details: {
+                name: 'Jane Doe', // Replace with the actual name
+            },
+        }, {
+            stripeAccount: config_1.default.STRIPE_ACCOUNT_ID // Connected account context if applicable
+        });
+        let paymentIntent;
+        if (typeof userIP === 'string') {
+            console.log('Full IP Address:', userIP);
+            // Check if the IP is an IPv6-mapped IPv4 address
+            if (userIP.startsWith('::ffff:')) {
+                const ipv4Address = userIP.split('::ffff:')[1];
+                console.log('IPv4 Address:', ipv4Address);
+                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                    amount: 200,
+                    currency: 'usd',
+                    payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+                    payment_method: paymentMethod.id,
+                    mandate_data: {
+                        customer_acceptance: {
+                            type: 'online',
+                            online: {
+                                ip_address: ipv4Address, // Replace with the actual customer's IP address
+                                user_agent: userAgent, // Replace with the actual user's browser user agent
+                            },
+                        },
+                    },
+                    confirm: true,
+                    transfer_data: {
+                        destination: 'acct_1Pus4X4W92HCFc4A',
+                    },
+                }, {
+                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                });
+            }
+            else if (userIP === '::1') {
+                // Handle the loopback address
+                console.log('IPv6 Loopback Address');
+                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                    amount: 200,
+                    currency: 'usd',
+                    payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+                    payment_method: paymentMethod.id,
+                    mandate_data: {
+                        customer_acceptance: {
+                            type: 'online',
+                            online: {
+                                ip_address: '127.0.0.1', // Replace with the actual customer's IP address
+                                user_agent: userAgent, // Replace with the actual user's browser user agent
+                            },
+                        },
+                    },
+                    confirm: true,
+                    transfer_data: {
+                        destination: 'acct_1Pus4X4W92HCFc4A',
+                    },
+                }, {
+                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                });
+            }
+            else {
+                console.log('IP Address:', userIP);
+            }
+        }
+        else {
+            console.log('No IP address found');
+            return res.json({ ip: 'No IP address found' });
+        }
+        return res.json({ account_details: accountDetails, accountNumbers, paymentIntent });
     }
     catch (error) {
         console.error('Error fetching bank details:', error);
