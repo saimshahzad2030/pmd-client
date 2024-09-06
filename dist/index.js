@@ -55,7 +55,6 @@ app.use('/api', order_routes_1.default);
 app.use('/api', shipping_routes_1.default);
 app.use('/api', query_routes_1.default);
 app.use('/api', plaid_routes_1.default);
-// const port = 3000;
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -718,6 +717,6 @@ app.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {
     // });
     // console.log('Refund Created:', refund);
     // console.log(paymentIntent); 
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on http://localhost:${port} `);
 }));
 //# sourceMappingURL=index.js.map

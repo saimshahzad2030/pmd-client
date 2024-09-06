@@ -16,6 +16,7 @@ exports.exchangePublicToken = exports.createLinkToken = void 0;
 const plaid_1 = require("../plaid/plaid");
 const plaid_2 = require("plaid");
 const db_1 = __importDefault(require("../db/db"));
+const client_1 = require("@prisma/client");
 const createLinkToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -44,18 +45,38 @@ const exchangePublicToken = (req, res) => __awaiter(void 0, void 0, void 0, func
         });
         const accessToken = response.data.access_token;
         const itemId = response.data.item_id;
+        let updatedUser;
         if (accessToken) {
-            yield db_1.default.user.update({
+            updatedUser = yield db_1.default.user.update({
                 where: {
                     id: userId
                 },
                 data: {
-                    buyerPaymentMethodVerified: 'TRUE',
                     plaidAccessToken: accessToken
                 }
             });
         }
-        res.json({ access_token: accessToken, item_id: itemId });
+        if (updatedUser.imageUrl && updatedUser.licenseImage) {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.UnderGoingVerification
+                }
+            });
+        }
+        else {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.DetailsRequired
+                }
+            });
+        }
+        res.json({ access_token: accessToken, item_id: itemId, updatedUser });
     }
     catch (error) {
         console.log(error);

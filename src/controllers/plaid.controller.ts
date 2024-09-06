@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { client } from "../plaid/plaid";
 import { Products, CountryCode } from "plaid";
 import prisma from "../db/db";
+import { ResponseMessage } from "@prisma/client";
 export const createLinkToken = async (req: Request, res: Response) => {
     try {
 
@@ -31,18 +32,39 @@ export const exchangePublicToken = async (req: Request, res: Response) => {
 
         const accessToken = response.data.access_token;
         const itemId = response.data.item_id;
+        let updatedUser;
         if (accessToken) {
-            await prisma.user.update({
+            updatedUser = await prisma.user.update({
                 where: {
                     id: userId
                 },
                 data: {
-                    buyerPaymentMethodVerified: 'TRUE',
                     plaidAccessToken: accessToken
                 }
             })
+
         }
-        res.json({ access_token: accessToken, item_id: itemId });
+        if (updatedUser.imageUrl && updatedUser.licenseImage) {
+            updatedUser = await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: ResponseMessage.UnderGoingVerification
+                }
+            })
+        }
+        else {
+            updatedUser = await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: ResponseMessage.DetailsRequired
+                }
+            })
+        }
+        res.json({ access_token: accessToken, item_id: itemId, updatedUser });
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });

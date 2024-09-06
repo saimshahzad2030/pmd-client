@@ -25,7 +25,8 @@ const config = {
     PLAID_ENV: process.env.PLAID_ENV,
     STRIPE_SECRET: process.env.STRIPE_SECRET,
     STRIPE_ACCOUNT_ID: process.env.STRIPE_ACCOUNT_ID,
-    CLIENT_URL: process.env.CLIENT_URL
+    CLIENT_URL: process.env.CLIENT_URL,
+    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS
 };
 exports.default = config;
 //# sourceMappingURL=config.js.map
