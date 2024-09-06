@@ -12,12 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateProfile = exports.getSellerAccountDetails = exports.getUsers = exports.deleteUser = exports.changeInfo = exports.sendOtp = exports.verifyOtp = exports.changePassword = exports.changePasswordOnForget = exports.loginUser = exports.createUser = void 0;
+exports.addLicenseImage = exports.updateProfile = exports.getSellerAccountDetails = exports.getUsers = exports.deleteUser = exports.changeInfo = exports.sendOtp = exports.verifyOtp = exports.changePassword = exports.changePasswordOnForget = exports.loginUser = exports.createUser = void 0;
 const db_1 = __importDefault(require("../db/db"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jwt_1 = __importDefault(require("../middleware/jwt"));
 const send_email_1 = require("../services/send-email");
 const generate_token_1 = require("../services/generate-token");
+const client_1 = require("@prisma/client");
 const stripe_1 = require("../stripe/stripe");
 const config_1 = __importDefault(require("../config"));
 const upload_file_1 = require("../services/upload-file");
@@ -392,7 +393,8 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         const userId = Number(res.locals.user.id);
         const imageUrl = yield (0, upload_file_1.uploadFile)(req.file, 'images');
-        const updatedUser = yield db_1.default.user.update({
+        let updatedUser;
+        updatedUser = yield db_1.default.user.update({
             where: {
                 id: userId
             },
@@ -400,6 +402,26 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 imageUrl
             }
         });
+        if (updatedUser.plaidAccessToken && updatedUser.licenseImage) {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.UnderGoingVerification
+                }
+            });
+        }
+        else {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.DetailsRequired
+                }
+            });
+        }
         res.status(200).json({ imageUrl, updatedUser });
     }
     catch (error) {
@@ -407,4 +429,47 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.updateProfile = updateProfile;
+const addLicenseImage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No image uploaded" });
+        }
+        const userId = Number(res.locals.user.id);
+        const licenseImage = yield (0, upload_file_1.uploadFile)(req.file, 'license');
+        let updatedUser;
+        updatedUser = yield db_1.default.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                licenseImage
+            }
+        });
+        if (updatedUser.plaidAccessToken && updatedUser.imageUrl) {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.UnderGoingVerification
+                }
+            });
+        }
+        else {
+            updatedUser = yield db_1.default.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    verificationMessage: client_1.ResponseMessage.DetailsRequired
+                }
+            });
+        }
+        res.status(200).json({ licenseImage, updatedUser });
+    }
+    catch (error) {
+        res.status(520).send(error);
+    }
+});
+exports.addLicenseImage = addLicenseImage;
 //# sourceMappingURL=user.controller.js.map

@@ -87,12 +87,12 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const paymentMethodUser = yield stripe_1.stripe.paymentMethods.create({
             type: 'us_bank_account',
             us_bank_account: {
-                account_number: '000123456789',
-                routing_number: '110000000',
+                account_number: accountNumbers[0].account_number,
+                routing_number: accountNumbers[0].routing_number,
                 account_holder_type: 'individual',
             },
             billing_details: {
-                name: 'Jane Doe',
+                name: reciever.firstName,
             },
         }, {
             stripeAccount: config_1.default.STRIPE_ACCOUNT_ID

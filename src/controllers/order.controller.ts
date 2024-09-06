@@ -106,12 +106,12 @@ export const addNewOrder = async (req: Request, res: Response) => {
         const paymentMethodUser = await stripe.paymentMethods.create({
           type: 'us_bank_account', 
           us_bank_account: {
-            account_number: '000123456789',  
-            routing_number: '110000000',   
+            account_number: accountNumbers[0].account_number,  
+            routing_number: accountNumbers[0].routing_number,   
             account_holder_type: 'individual',  
           },
           billing_details: {
-            name: 'Jane Doe',  
+            name: reciever.firstName,  
           },
         }, {
           stripeAccount: config.STRIPE_ACCOUNT_ID  

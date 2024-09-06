@@ -30,7 +30,8 @@ router.route('/user/otp')
     .post(user_controller_1.verifyOtp)
     .patch(user_controller_1.changePasswordOnForget);
 router.route('/business-details')
-    .get(jwt_1.default.verifyUser, user_controller_1.getSellerAccountDetails);
+    .get(jwt_1.default.verifyUser, user_controller_1.getSellerAccountDetails)
+    .patch(jwt_1.default.verifyUser, upload.single('license'), user_controller_1.addLicenseImage);
 router.route('/user-details')
     .get(jwt_1.default.fetchUserDetails);
 exports.default = router;
