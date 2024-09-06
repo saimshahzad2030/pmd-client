@@ -29,6 +29,13 @@ enum PaymentVerified {
   FALSE
 }
 
+enum ResponseMessage {
+  LicenseInvalid
+  LicenseImageNotMatchingWithProfile
+  UnderGoingVerification
+  DetailsRequired
+}
+
 model User {
   id                         Int                     @id @default(autoincrement())
   firstName                  String
@@ -38,9 +45,11 @@ model User {
   email                      String                  @unique
   password                   String
   imageUrl                   String?
+  licenseImage               String?
   createdAt                  DateTime                @default(now())
   updatedAt                  DateTime                @updatedAt
   dateOfBirth                DateTime?
+  verificationMessage        ResponseMessage         @default(DetailsRequired)
   phone                      String?                 @unique
   token                      String?                 @db.Text
   stripeConnectedAccountId   String?                 @unique

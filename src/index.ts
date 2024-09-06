@@ -9,8 +9,6 @@ import bankAccountRoutes from './routes/bank-account.routes'
 import creditCardRoutes from './routes/credit-card.routes'
 import productRoutes from './routes/product.routes'
 import cartRoutes from './routes/cart.routes'
-
-
 import orderRoutes from './routes/order.routes'
 import shippingRoutes from './routes/shipping.routes'
 import queryRoutes from './routes/query.routes'
@@ -20,7 +18,7 @@ import bodyParser from 'body-parser';
 import { serializeBigInt } from "./utils/seialize-bigint";
 import { client } from './plaid/plaid'
 import { stripe } from './stripe/stripe';
-import { Products, CountryCode } from 'plaid';
+import { CountryCode } from 'plaid';
 import config from './config';
 const app = express();
 app.use(cors())
@@ -45,7 +43,6 @@ app.use('/api', orderRoutes)
 app.use('/api', shippingRoutes)
 app.use('/api', queryRoutes)
 app.use('/api', plaidRoutes)
-// const port = 3000;
 
 const port = process.env.PORT || 3000;
 app.get('/', async (req: Request, res: Response) => {
@@ -782,5 +779,6 @@ app.listen(port, async () => {
 
   // console.log('Refund Created:', refund);
   // console.log(paymentIntent); 
-  console.log(`Server is running on http://localhost:${port}`);
+
+  console.log(`Server is running on http://localhost:${port} `);
 });
