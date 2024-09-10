@@ -9,6 +9,8 @@ const plaid_controller_1 = require("../controllers/plaid.controller");
 const router = (0, express_1.Router)();
 router.route("/exchange-public-token")
     .post(jwt_1.default.verifyUser, plaid_controller_1.exchangePublicToken);
+router.route("/exchange-id-verification-token")
+    .post(plaid_controller_1.exchangeIdVerificationToken);
 router.route("/create-link-token")
     .post(jwt_1.default.verifyUser, plaid_controller_1.createLinkToken);
 exports.default = router;

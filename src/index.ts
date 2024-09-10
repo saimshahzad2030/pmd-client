@@ -18,7 +18,7 @@ import bodyParser from 'body-parser';
 import { serializeBigInt } from "./utils/seialize-bigint";
 import { client } from './plaid/plaid'
 import { stripe } from './stripe/stripe';
-import { CountryCode } from 'plaid';
+import { CountryCode, Products } from 'plaid';
 import config from './config';
 const app = express();
 app.use(cors())
@@ -284,6 +284,84 @@ app.get('/api/get-bank-details', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+app.post('/create-verification-session', async (req: Request, res: Response) => {
+  try {
+    const clientUserId = String(req.body.clientUserId);
+
+    const response = await client.identityVerificationCreate({
+      client_user_id: clientUserId,
+      is_idempotent: true,
+      template_id: 'idvtmp_dnGyn66a6WZs65', // Set your template ID
+      is_shareable: false, // or true depending on your requirements
+      gave_consent: true,
+
+    });
+
+    console.log(response.data);
+
+    // Assuming the correct property in the response is 'data', adjust accordingly
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error creating verification session', error);
+    res.status(500).json({ error: 'Error creating verification session' });
+  }
+});
+
+// app.post("/api/generate_link_token_for_idv", async (req, res, next) => {
+//   try {
+//     const userId = "usaer_sdas";
+//     const email = "saimshehzad2030@gmail.com";
+//     const userObject = { client_user_id: userId, email_address: email };
+
+//     const tokenResponse = await client.linkTokenCreate({
+//       user: userObject,
+//       products: [Products.IdentityVerification],
+//       identity_verification: {
+//         template_id: "idvtmp_98z4wWCMbZZFKp",
+//       },
+//       client_name: "Precious Market Place",
+//       language: "en",
+//       country_codes: [CountryCode.Us],
+//     });
+//     res.json(tokenResponse.data);
+//   } catch (error) {
+//     console.log(`Running into an error!`);
+//     next(error);
+//   }
+// });
+// Endpoint to get verification session status
+app.get('/verification-status/:sessionId', async (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+
+  try {
+    const response = await client.identityVerificationGet({
+      identity_verification_id: sessionId,
+    });
+    
+    console.log(response.data.status);
+
+    res.status(200).json({
+      message: 'Verification status retrieved successfully',
+      status: response.data.status,
+      session: response.data
+    });
+  } catch (error) {
+    // console.error('Error retrieving verification status', error);
+    res.status(500).json({ error: 'Error retrieving verification status' });
+  }
+});
+
+// Webhook endpoint for receiving real-time updates
+app.post('/webhook', async (req: Request, res: Response) => {
+  const { verification_id, status } = req.body;
+
+  // Handle webhook event
+  console.log(`Received webhook for verification ${verification_id} with status ${status}`);
+
+  res.status(200).json({ message: 'Webhook received successfully' });
+});
+
 app.delete('/connected-account', async (req: Request, res: Response) => {
   try {
     await stripe.accounts.del(req.body.accountId).then(() => {
@@ -432,6 +510,7 @@ app.get('/create-transfer', async (req: Request, res: Response) => {
 
   }
 })
+
 
 app.get('/balance', async (req: Request, res: Response) => {
   try {
@@ -757,6 +836,7 @@ app.post('/abcd',
   })
 
 app.listen(port, async () => {
+
   // const bankAccounts = await stripe.accounts.listExternalAccounts('acct_1PmsHFQFAm3jyZZu', {
   //   object: 'bank_account',
   // });

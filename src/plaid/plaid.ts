@@ -3,9 +3,9 @@ import config from '../config';
 
 export const client = new PlaidApi(
   new Configuration({
-    // basePath: PlaidEnvironments.development,
+    basePath: PlaidEnvironments.development,
     // 
-    basePath: PlaidEnvironments.sandbox,
+    // basePath: PlaidEnvironments.sandbox,
     baseOptions: {
       headers: {
         'PLAID-CLIENT-ID': config.PLAID_CLIENT_ID,
