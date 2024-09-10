@@ -26,7 +26,8 @@ const config = {
     STRIPE_SECRET: process.env.STRIPE_SECRET,
     STRIPE_ACCOUNT_ID: process.env.STRIPE_ACCOUNT_ID,
     CLIENT_URL: process.env.CLIENT_URL,
-    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS
+    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    TEMPLATE_ID: process.env.TEMPLATE_ID
 };
 exports.default = config;
 //# sourceMappingURL=config.js.map
