@@ -45,6 +45,7 @@ app.use('/api', queryRoutes)
 app.use('/api', plaidRoutes)
 
 const port = process.env.PORT || 3000;
+
 app.get('/', async (req: Request, res: Response) => {
   try {
 
@@ -58,38 +59,38 @@ app.get('/', async (req: Request, res: Response) => {
         cart: true
       }
     })
-    res.status(200).json({ message: 'Products fetched', products: serializeBigInt(products) })
-    // const users = await prisma.user.findMany({
-    //   include: {
-    //     favourites: {
-    //       include: {
-    //         product: true
-    //       }
-    //     },
-    //     creditCards: true,
-    //     bankAccounts: true,
-    //     digitalWallets: true,
-    //     products: true,
-    //     addresses: true,
-    //     notifications: true,
-    //     cart: {
-    //       include: {
-    //         product: true
-    //       }
-    //     },
-    //     recieverOrders: {
-    //       include: {
-    //         Shippings: true
-    //       }
-    //     },
-    //     senderOrders: {
-    //       include: {
-    //         Shippings: true
-    //       }
-    //     }
-    //   },
-    // });
+    const users = await prisma.user.findMany({
+      include: {
+        favourites: {
+          include: {
+            product: true
+          }
+        },
+        creditCards: true,
+        bankAccounts: true,
+        digitalWallets: true,
+        products: true,
+        addresses: true,
+        notifications: true,
+        cart: {
+          include: {
+            product: true
+          }
+        },
+        recieverOrders: {
+          include: {
+            Shippings: true
+          }
+        },
+        senderOrders: {
+          include: {
+            Shippings: true
+          }
+        }
+      },
+    });
 
+    res.status(200).json({ message: 'Products fetched', products: serializeBigInt(users) })
     // res.json({ users: serializeBigInt(users), message: 'Fetched successfully' });
   } catch (error) {
     res.status(500).json({ error: error });
@@ -338,7 +339,7 @@ app.get('/verification-status/:sessionId', async (req: Request, res: Response) =
     const response = await client.identityVerificationGet({
       identity_verification_id: sessionId,
     });
-    
+
     console.log(response.data.status);
 
     res.status(200).json({
@@ -834,7 +835,29 @@ app.post('/abcd',
       res.status(400).json({ success: false, error: error.message });
     }
   })
+app.get('/verificationDetails', async (req, res) => {
+  try {
+    const { identity_verification_id } = req?.query
+    const response = await client.identityVerificationGet({
+      identity_verification_id: String(identity_verification_id)
+    });
 
+    // Send the actual response data back to the client
+    await prisma.user.update({
+      where: { id: 9 },
+      data: {
+        plaidIdVerificationAccessToken: String(identity_verification_id)
+      }
+    })
+    return res.status(200).json({ status: response.data.status });
+
+  } catch (error) {
+    console.error('Error fetching identity verification:', error.message);
+
+    // Return the error response to the client
+    return res.status(500).json({ error: error.message });
+  }
+});
 app.listen(port, async () => {
 
   // const bankAccounts = await stripe.accounts.listExternalAccounts('acct_1PmsHFQFAm3jyZZu', {
@@ -859,6 +882,7 @@ app.listen(port, async () => {
 
   // console.log('Refund Created:', refund);
   // console.log(paymentIntent); 
+
 
   console.log(`Server is running on http://localhost:${port} `);
 });

@@ -5,10 +5,10 @@ import bcrypt from "bcrypt";
 import jwtConfig from "../middleware/jwt";
 import { sendEmail } from '../services/send-email';
 import { generateOtp } from '../services/generate-token';
-import { ResponseMessage, User } from "@prisma/client";
 import { stripe } from "../stripe/stripe";
 import config from "../config";
 import { uploadFile } from "../services/upload-file";
+import { User } from "@prisma/client";
 export const createUser = async (req: Request, res: Response) => {
   try {
     const { firstName, lastName, email, password } = req.body as userCreation;
@@ -429,26 +429,8 @@ export const updateProfile = async (req: Request, res: Response) => {
         imageUrl
       }
     })
-    if (updatedUser.plaidAccessToken && updatedUser.licenseImage) {
-      updatedUser = await prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          verificationMessage: ResponseMessage.UnderGoingVerification
-        }
-      })
-    }
-    else {
-      updatedUser = await prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          verificationMessage: ResponseMessage.DetailsRequired
-        }
-      })
-    }
+
+
     res.status(200).json({ imageUrl, updatedUser });
   }
   catch (error) {
@@ -457,47 +439,3 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
 }
 
-
-export const addLicenseImage = async (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No image uploaded" });
-    }
-    const userId = Number(res.locals.user.id);
-    const licenseImage = await uploadFile(req.file, 'license');
-    let updatedUser
-    updatedUser = await prisma.user.update({
-      where: {
-        id: userId
-      },
-      data: {
-        licenseImage
-      }
-    })
-    if (updatedUser.plaidAccessToken && updatedUser.imageUrl) {
-      updatedUser = await prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          verificationMessage: ResponseMessage.UnderGoingVerification
-        }
-      })
-    }
-    else {
-      updatedUser = await prisma.user.update({
-        where: {
-          id: userId
-        },
-        data: {
-          verificationMessage: ResponseMessage.DetailsRequired
-        }
-      })
-    }
-    res.status(200).json({ licenseImage, updatedUser });
-  }
-  catch (error) {
-    res.status(520).send(error);
-
-  }
-}

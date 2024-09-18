@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { changePasswordOnForget, createUser, sendOtp, getUsers, loginUser, verifyOtp, changePassword, getSellerAccountDetails, changeInfo, deleteUser, updateProfile, addLicenseImage } from '../controllers/user.controller';
+import { changePasswordOnForget, createUser, sendOtp, getUsers, loginUser, verifyOtp, changePassword, getSellerAccountDetails, changeInfo, deleteUser, updateProfile } from '../controllers/user.controller';
 import jwtConfig from "../middleware/jwt";
 import multer from 'multer';
 
@@ -30,7 +30,6 @@ router.route('/user/otp')
 
 router.route('/business-details')
     .get(jwtConfig.verifyUser, getSellerAccountDetails)
-    .patch(jwtConfig.verifyUser, upload.single('license'), addLicenseImage)
 
 router.route('/user-details')
     .get(jwtConfig.fetchUserDetails)

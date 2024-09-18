@@ -5,6 +5,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken'
 import prisma from "../db/db";
 import { serializeBigInt } from "../utils/seialize-bigint";
 import { userInfo } from "os";
+import { client } from "../plaid/plaid";
 const jwtConfig = {
   sign(payload: object): string {
     const token = jwt.sign(payload, process.env.JWT_SECRET_KEY as string);
@@ -136,6 +137,7 @@ const jwtConfig = {
             res.status(401).json({ message: "You are not authorized" });
           } else {
             // req.user = decoded as JwtPayload | object;
+
             const user = await prisma.user.findFirst({
               where: {
                 token: token
@@ -195,12 +197,20 @@ const jwtConfig = {
                 }
               }
             })
+
+            let response;
+            if (user.plaidIdVerificationAccessToken) {
+              response = await client.identityVerificationGet({
+                identity_verification_id: String(user.plaidIdVerificationAccessToken)
+              });
+
+            }
             if (!user) {
               return res.status(401).json({ message: "You are not authorized" });
 
             }
 
-            return res.status(200).json({ message: "Details Fetched", user: serializeBigInt(user) })
+            return res.status(200).json({ message: "Details Fetched", user: serializeBigInt(user), identityVerificationStatus: response?.data?.status ? response?.data?.status : null })
           }
         });
       } else {

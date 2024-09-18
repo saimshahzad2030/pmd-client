@@ -10,8 +10,9 @@ const router = (0, express_1.Router)();
 router.route("/exchange-public-token")
     .post(jwt_1.default.verifyUser, plaid_controller_1.exchangePublicToken);
 router.route("/exchange-id-verification-token")
-    .post(plaid_controller_1.exchangeIdVerificationToken);
+    .post(jwt_1.default.verifyUser, plaid_controller_1.exchangeIdVerificationToken);
 router.route("/create-link-token")
-    .post(jwt_1.default.verifyUser, plaid_controller_1.createLinkToken);
+    .post(jwt_1.default.verifyUser, plaid_controller_1.createLinkToken)
+    .get(jwt_1.default.verifyUser, plaid_controller_1.getSessionStatus);
 exports.default = router;
 //# sourceMappingURL=plaid.routes.js.map
