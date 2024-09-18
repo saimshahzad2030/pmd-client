@@ -68,37 +68,37 @@ app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 cart: true
             }
         });
-        res.status(200).json({ message: 'Products fetched', products: (0, seialize_bigint_1.serializeBigInt)(products) });
-        // const users = await prisma.user.findMany({
-        //   include: {
-        //     favourites: {
-        //       include: {
-        //         product: true
-        //       }
-        //     },
-        //     creditCards: true,
-        //     bankAccounts: true,
-        //     digitalWallets: true,
-        //     products: true,
-        //     addresses: true,
-        //     notifications: true,
-        //     cart: {
-        //       include: {
-        //         product: true
-        //       }
-        //     },
-        //     recieverOrders: {
-        //       include: {
-        //         Shippings: true
-        //       }
-        //     },
-        //     senderOrders: {
-        //       include: {
-        //         Shippings: true
-        //       }
-        //     }
-        //   },
-        // });
+        const users = yield db_1.default.user.findMany({
+            include: {
+                favourites: {
+                    include: {
+                        product: true
+                    }
+                },
+                creditCards: true,
+                bankAccounts: true,
+                digitalWallets: true,
+                products: true,
+                addresses: true,
+                notifications: true,
+                cart: {
+                    include: {
+                        product: true
+                    }
+                },
+                recieverOrders: {
+                    include: {
+                        Shippings: true
+                    }
+                },
+                senderOrders: {
+                    include: {
+                        Shippings: true
+                    }
+                }
+            },
+        });
+        res.status(200).json({ message: 'Products fetched', products: (0, seialize_bigint_1.serializeBigInt)(users) });
         // res.json({ users: serializeBigInt(users), message: 'Fetched successfully' });
     }
     catch (error) {
@@ -761,6 +761,27 @@ app.post('/abcd', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         res.status(400).json({ success: false, error: error.message });
+    }
+}));
+app.get('/verificationDetails', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { identity_verification_id } = req === null || req === void 0 ? void 0 : req.query;
+        const response = yield plaid_1.client.identityVerificationGet({
+            identity_verification_id: String(identity_verification_id)
+        });
+        // Send the actual response data back to the client
+        yield db_1.default.user.update({
+            where: { id: 9 },
+            data: {
+                plaidIdVerificationAccessToken: String(identity_verification_id)
+            }
+        });
+        return res.status(200).json({ status: response.data.status });
+    }
+    catch (error) {
+        console.error('Error fetching identity verification:', error.message);
+        // Return the error response to the client
+        return res.status(500).json({ error: error.message });
     }
 }));
 app.listen(port, () => __awaiter(void 0, void 0, void 0, function* () {

@@ -17,6 +17,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 // import config from "../config";
 const db_1 = __importDefault(require("../db/db"));
 const seialize_bigint_1 = require("../utils/seialize-bigint");
+const plaid_1 = require("../plaid/plaid");
 const jwtConfig = {
     sign(payload) {
         const token = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET_KEY);
@@ -145,6 +146,7 @@ const jwtConfig = {
                 const recieverOrders = req.query.recieverOrders === 'true';
                 const senderOrders = req.query.senderOrders === 'true';
                 jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                    var _a, _b;
                     if (err) {
                         res.status(401).json({ message: "You are not authorized" });
                     }
@@ -208,10 +210,16 @@ const jwtConfig = {
                                 }
                             }
                         });
+                        let response;
+                        if (user.plaidIdVerificationAccessToken) {
+                            response = yield plaid_1.client.identityVerificationGet({
+                                identity_verification_id: String(user.plaidIdVerificationAccessToken)
+                            });
+                        }
                         if (!user) {
                             return res.status(401).json({ message: "You are not authorized" });
                         }
-                        return res.status(200).json({ message: "Details Fetched", user: (0, seialize_bigint_1.serializeBigInt)(user) });
+                        return res.status(200).json({ message: "Details Fetched", user: (0, seialize_bigint_1.serializeBigInt)(user), identityVerificationStatus: ((_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.status) ? (_b = response === null || response === void 0 ? void 0 : response.data) === null || _b === void 0 ? void 0 : _b.status : null });
                     }
                 }));
             }
