@@ -125,7 +125,6 @@ const jwtConfig = {
             }
         }
         catch (error) {
-            // console.log(err);
             res.status(520).send(error);
         }
     },
@@ -151,7 +150,6 @@ const jwtConfig = {
                         res.status(401).json({ message: "You are not authorized" });
                     }
                     else {
-                        // req.user = decoded as JwtPayload | object;
                         const user = yield db_1.default.user.findFirst({
                             where: {
                                 token: token

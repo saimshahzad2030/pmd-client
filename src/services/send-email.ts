@@ -1,10 +1,10 @@
 import nodemailer from 'nodemailer'
-export const sendEmail = async (userEmail:string, subject:string, message:string) => {
+export const sendEmail = async (userEmail: string, subject: string, message: string) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: "saimshehzad2040@gmail.com",
-      pass: "grtd dmvh rjdw vlbo",
+      pass: "fdzo hgag vbrj wxxp",
     },
   });
 
@@ -13,7 +13,7 @@ export const sendEmail = async (userEmail:string, subject:string, message:string
     to: userEmail,
     subject: subject,
     text: message,
-  }; 
+  };
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
@@ -21,4 +21,3 @@ export const sendEmail = async (userEmail:string, subject:string, message:string
     throw new Error('Error sending email');
   }
 };
- 
