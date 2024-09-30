@@ -77,6 +77,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             routing_number: account.routing,
             wire_routing: account.wire_routing,
         }));
+        console.log('account numbers: ', accountNumbers);
         // console.log(response.data.item.institution_id)
         const accountDetails = response.data.accounts; // This will give you the bank account details
         const institutions = yield plaid_1.client.institutionsGetById({
@@ -84,71 +85,104 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             country_codes: [plaid_2.CountryCode.Us],
         });
         const bankName = institutions.data.institution.name;
-        const paymentMethodUser = yield stripe_1.stripe.paymentMethods.create({
-            type: 'us_bank_account',
-            us_bank_account: {
-                account_number: accountNumbers[0].account_number,
-                routing_number: accountNumbers[0].routing_number,
-                account_holder_type: 'individual',
-            },
-            billing_details: {
-                name: reciever.firstName,
-            },
-        }, {
-            stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
-        });
+        let paymentMethodUser;
+        if (config_1.default.PLAID_ENV != 'sandbox') {
+            paymentMethodUser = yield stripe_1.stripe.paymentMethods.create({
+                type: 'us_bank_account',
+                us_bank_account: {
+                    account_number: accountNumbers[0].account_number,
+                    routing_number: accountNumbers[0].routing_number,
+                    account_holder_type: 'individual',
+                },
+                billing_details: {
+                    name: reciever.firstName,
+                },
+            }, {
+                stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+            });
+        }
         let paymentIntent;
         if (typeof userIP === 'string') {
             console.log('Full IP Address:', userIP);
             if (userIP.startsWith('::ffff:')) {
                 const ipv4Address = userIP.split('::ffff:')[1];
                 console.log('IPv4 Address:', ipv4Address);
-                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                    amount: price,
-                    currency: 'usd',
-                    payment_method_types: ['us_bank_account'],
-                    payment_method: paymentMethodUser.id,
-                    mandate_data: {
-                        customer_acceptance: {
-                            type: 'online',
-                            online: {
-                                ip_address: ipv4Address,
-                                user_agent: userAgent,
+                if (config_1.default.PLAID_ENV == 'sandbox') {
+                    paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                        amount: 10000,
+                        currency: 'usd',
+                        payment_method_types: ['card'],
+                        payment_method: 'pm_card_visa',
+                        confirm: true,
+                        transfer_data: {
+                            destination: sender.stripeConnectedAccountId,
+                        },
+                    }, {
+                        stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                    });
+                }
+                else {
+                    paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                        amount: price,
+                        currency: 'usd',
+                        payment_method_types: ['us_bank_account'],
+                        payment_method: paymentMethodUser.id,
+                        mandate_data: {
+                            customer_acceptance: {
+                                type: 'online',
+                                online: {
+                                    ip_address: ipv4Address,
+                                    user_agent: userAgent,
+                                },
                             },
                         },
-                    },
-                    confirm: true,
-                    transfer_data: {
-                        destination: sender.stripeConnectedAccountId,
-                    },
-                }, {
-                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
-                });
+                        confirm: true,
+                        transfer_data: {
+                            destination: sender.stripeConnectedAccountId,
+                        },
+                    }, {
+                        stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                    });
+                }
             }
             else if (userIP === '::1') {
-                // Handle the loopback address
-                console.log('IPv6 Loopback Address');
-                paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                    amount: price,
-                    currency: 'usd',
-                    payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
-                    payment_method: paymentMethodUser.id,
-                    mandate_data: {
-                        customer_acceptance: {
-                            type: 'online',
-                            online: {
-                                ip_address: '127.0.0.1', // Replace with the actual customer's IP address
-                                user_agent: userAgent, // Replace with the actual user's browser user agent
+                if (config_1.default.PLAID_ENV == 'sandbox') {
+                    paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                        amount: 10000,
+                        currency: 'usd',
+                        payment_method_types: ['card'],
+                        payment_method: 'pm_card_visa',
+                        confirm: true,
+                        transfer_data: {
+                            destination: sender.stripeConnectedAccountId,
+                        },
+                    }, {
+                        stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                    });
+                }
+                else {
+                    paymentIntent = yield stripe_1.stripe.paymentIntents.create({
+                        amount: price,
+                        currency: 'usd',
+                        payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+                        payment_method: paymentMethodUser.id,
+                        mandate_data: {
+                            customer_acceptance: {
+                                type: 'online',
+                                online: {
+                                    ip_address: '127.0.0.1', // Replace with the actual customer's IP address
+                                    user_agent: userAgent, // Replace with the actual user's browser user agent
+                                },
                             },
                         },
-                    },
-                    confirm: true,
-                    transfer_data: {
-                        destination: sender.stripeConnectedAccountId,
-                    },
-                }, {
-                    stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
-                });
+                        confirm: true,
+                        transfer_data: {
+                            destination: sender.stripeConnectedAccountId,
+                        },
+                    }, {
+                        stripeAccount: config_1.default.STRIPE_ACCOUNT_ID
+                    });
+                }
             }
             else {
                 console.log('IP Address:', userIP);
@@ -158,20 +192,6 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             console.log('No IP address found');
             return res.json({ ip: 'No IP address found' });
         }
-        // const paymentIntent = await stripe.paymentIntents.create({
-        //     amount:10000,
-        //     currency: 'usd',
-        //     payment_method_types: ['card'],
-        // payment_method: 'pm_card_visa', 
-        // confirm:true,
-        // transfer_data: {
-        //   destination: sender.stripeConnectedAccountId,  
-        // },
-        //   },  
-        //   {
-        //     stripeAccount:config.STRIPE_ACCOUNT_ID
-        //   });  
-        //   console.log(paymentIntent)
         const newShipping = yield db_1.default.order.create({
             data: {
                 productId,

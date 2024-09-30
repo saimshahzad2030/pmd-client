@@ -7,8 +7,7 @@ exports.client = void 0;
 const plaid_1 = require("plaid");
 const config_1 = __importDefault(require("../config"));
 exports.client = new plaid_1.PlaidApi(new plaid_1.Configuration({
-    // basePath: PlaidEnvironments.development,
-    basePath: plaid_1.PlaidEnvironments.sandbox,
+    basePath: config_1.default.PLAID_ENV == 'sandbox' ? plaid_1.PlaidEnvironments.sandbox : plaid_1.PlaidEnvironments.development,
     baseOptions: {
         headers: {
             'PLAID-CLIENT-ID': config_1.default.PLAID_CLIENT_ID,

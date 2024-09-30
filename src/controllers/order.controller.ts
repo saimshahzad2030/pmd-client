@@ -5,9 +5,9 @@ import {  placeOrderType } from '../types/req';
  import config from "../config";
  import {client} from '../plaid/plaid'
  import { CountryCode } from "plaid";
-export const addNewOrder = async (req: Request, res: Response) => {
-    try {
-        const { productId,
+ export const addNewOrder = async (req: Request, res: Response) => {
+   try {
+     const { productId,
             quantity,
             price,
             orderPlacedDate,
@@ -17,83 +17,84 @@ export const addNewOrder = async (req: Request, res: Response) => {
             messageForSeller,
             metalAuthenticaitonService,
             shippingCost } = req.body as placeOrderType; 
-
-        if (!orderExpectedDate ) {
+            
+            if (!orderExpectedDate ) {
             return res.status(400).json({ message: "orderExpectedDate fields are required" });
-        } 
-       if(  !quantity  )
-       {
-        
+          } 
+          if(  !quantity  )
+            {
+              
         return res.status(400).json({ message: "quantity fields are required" });
-    }
+      }
     if(  !orderPlacedDate )
+      {
+        
+        return res.status(400).json({ message: "orderPlacedDate fields are required" });
+      }
+      if(   !paymentMethod  )
         {
-         
-         return res.status(400).json({ message: "orderPlacedDate fields are required" });
-     }
-     if(   !paymentMethod  )
+          
+          return res.status(400).json({ message: "paymentMethod fields are required" });
+        }
+        if( !messageForSeller   )
+          {
+            
+            return res.status(400).json({ message: "messageForSeller fields are required" });
+          }
+          if(   !metalAuthenticaitonService  )
         {
+          
+          return res.status(400).json({ message: "metalAuthenticaitonService fields are required" });
+        }
+        if( !price   )
+          {
          
-         return res.status(400).json({ message: "paymentMethod fields are required" });
-     }
-     if( !messageForSeller   )
-        {
-         
-         return res.status(400).json({ message: "messageForSeller fields are required" });
-     }
-     if(   !metalAuthenticaitonService  )
-        {
-         
-         return res.status(400).json({ message: "metalAuthenticaitonService fields are required" });
-     }
-     if( !price   )
-        {
-         
-         return res.status(400).json({ message: "price fields are required" });
+            return res.status(400).json({ message: "price fields are required" });
      }
      if(  !shippingCost  )
         {
-         
-         return res.status(400).json({ message: "shippingCost required" });
-     }
-     if(  !senderId )
-        {
-         
-         return res.status(400).json({ message: "senderId required" });
-     } 
-    const sender = await prisma.user.findFirst({
-            where:{
-                id:senderId,
-
-            }
-        })
-        const recieverId = Number(res.locals?.user.id); 
-        const reciever = await prisma.user.findFirst({
-            where:{
-                id:recieverId,
-
-            }
-        })
-       
-        const formattedOrderPlacedDate = new Date(orderPlacedDate).toISOString();
-        const formattedOrderExpectedDate = new Date(orderExpectedDate).toISOString();
-        const userAgent = req.headers['user-agent'] || 'Unknown';
-        let userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
-    
-        if (Array.isArray(userIP)) {
-          userIP = userIP[0];
+          
+          return res.status(400).json({ message: "shippingCost required" });
         }
-    
-        const access_token = reciever.plaidAccessToken
-        const response = await client.authGet({
-          access_token
-        });
+        if(  !senderId )
+          {
+            
+            return res.status(400).json({ message: "senderId required" });
+          } 
+    const sender = await prisma.user.findFirst({
+      where:{
+        id:senderId,
+        
+            }
+          })
+          const recieverId = Number(res.locals?.user.id); 
+          const reciever = await prisma.user.findFirst({
+            where:{
+              id:recieverId,
+              
+            }
+          })
+          
+          const formattedOrderPlacedDate = new Date(orderPlacedDate).toISOString();
+          const formattedOrderExpectedDate = new Date(orderExpectedDate).toISOString();
+          const userAgent = req.headers['user-agent'] || 'Unknown';
+          let userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
+          
+          if (Array.isArray(userIP)) {
+            userIP = userIP[0];
+          }
+          
+          const access_token = reciever.plaidAccessToken
+          const response = await client.authGet({
+            access_token
+          });
         const accountNumbers = response.data.numbers.ach.map(account => ({
           account_id: account.account_id,
           account_number: account.account,
           routing_number: account.routing,
           wire_routing: account.wire_routing,
         }));
+        console.log('account numbers: ',accountNumbers)
         // console.log(response.data.item.institution_id)
         const accountDetails = response.data.accounts;  // This will give you the bank account details
     
@@ -103,7 +104,10 @@ export const addNewOrder = async (req: Request, res: Response) => {
         });
       
         const bankName = institutions.data.institution.name; 
-        const paymentMethodUser = await stripe.paymentMethods.create({
+        let paymentMethodUser;
+        if(config.PLAID_ENV!='sandbox'){ 
+
+        paymentMethodUser = await stripe.paymentMethods.create({
           type: 'us_bank_account', 
           us_bank_account: {
             account_number: accountNumbers[0].account_number,  
@@ -116,6 +120,7 @@ export const addNewOrder = async (req: Request, res: Response) => {
         }, {
           stripeAccount: config.STRIPE_ACCOUNT_ID  
         });
+      }
     
     
         let paymentIntent;
@@ -125,55 +130,89 @@ export const addNewOrder = async (req: Request, res: Response) => {
           if (userIP.startsWith('::ffff:')) {
             const ipv4Address = userIP.split('::ffff:')[1];
             console.log('IPv4 Address:', ipv4Address);
+            if(config.PLAID_ENV == 'sandbox'){
+              paymentIntent = await stripe.paymentIntents.create({
+            amount:10000,
+            currency: 'usd',
+            payment_method_types: ['card'],
+        payment_method: 'pm_card_visa', 
+        confirm:true,
+        transfer_data: {
+          destination: sender.stripeConnectedAccountId,  
+        },
+          },  
+          {
+            stripeAccount:config.STRIPE_ACCOUNT_ID
+          });   
+            }
+            else{
+
+              paymentIntent = await stripe.paymentIntents.create({
+                amount: price,
+                currency: 'usd',
+                payment_method_types: ['us_bank_account'],  
+                payment_method: paymentMethodUser.id,
+                mandate_data: {
+                  customer_acceptance: {
+                    type: 'online',
+                    online: {
+                      ip_address: ipv4Address,  
+                      user_agent: userAgent, 
+                    },
+                  },
+                },
+                confirm: true,
+                transfer_data: {
+                  destination: sender.stripeConnectedAccountId,
+                },
+              },
+                {
+                  stripeAccount: config.STRIPE_ACCOUNT_ID
+                });
+            }
+          
+          } else if (userIP === '::1') { 
+            if(config.PLAID_ENV == 'sandbox'){
+              paymentIntent = await stripe.paymentIntents.create({
+            amount:10000,
+            currency: 'usd',
+            payment_method_types: ['card'],
+        payment_method: 'pm_card_visa', 
+        confirm:true,
+        transfer_data: {
+          destination: sender.stripeConnectedAccountId,  
+        },
+          },  
+          {
+            stripeAccount:config.STRIPE_ACCOUNT_ID
+          });   
+            } 
+           else{
             paymentIntent = await stripe.paymentIntents.create({
               amount: price,
-              currency: 'usd',
-              payment_method_types: ['us_bank_account'],  
-              payment_method: paymentMethodUser.id,
-              mandate_data: {
-                customer_acceptance: {
-                  type: 'online',
-                  online: {
-                    ip_address: ipv4Address,  
-                    user_agent: userAgent, 
-                  },
+
+            currency: 'usd',
+            payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+            payment_method: paymentMethodUser.id,
+            mandate_data: {
+              customer_acceptance: {
+                type: 'online',
+                online: {
+                  ip_address: '127.0.0.1', // Replace with the actual customer's IP address
+                  user_agent: userAgent, // Replace with the actual user's browser user agent
                 },
               },
-              confirm: true,
-              transfer_data: {
-                destination: sender.stripeConnectedAccountId,
-              },
             },
-              {
-                stripeAccount: config.STRIPE_ACCOUNT_ID
-              });
-          } else if (userIP === '::1') {
-            // Handle the loopback address
-            console.log('IPv6 Loopback Address');
-            paymentIntent = await stripe.paymentIntents.create({
-                amount: price,
+            confirm: true,
+            transfer_data: {
+              destination: sender.stripeConnectedAccountId,
 
-              currency: 'usd',
-              payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
-              payment_method: paymentMethodUser.id,
-              mandate_data: {
-                customer_acceptance: {
-                  type: 'online',
-                  online: {
-                    ip_address: '127.0.0.1', // Replace with the actual customer's IP address
-                    user_agent: userAgent, // Replace with the actual user's browser user agent
-                  },
-                },
-              },
-              confirm: true,
-              transfer_data: {
-                destination: sender.stripeConnectedAccountId,
-
-              },
             },
-              {
-                stripeAccount: config.STRIPE_ACCOUNT_ID
-              });
+          },
+            {
+              stripeAccount: config.STRIPE_ACCOUNT_ID
+            });
+           }
           } else {
             console.log('IP Address:', userIP);
           }
@@ -181,21 +220,7 @@ export const addNewOrder = async (req: Request, res: Response) => {
           console.log('No IP address found');
           return res.json({ ip: 'No IP address found' });
         }
-    
-        // const paymentIntent = await stripe.paymentIntents.create({
-        //     amount:10000,
-        //     currency: 'usd',
-        //     payment_method_types: ['card'],
-        // payment_method: 'pm_card_visa', 
-        // confirm:true,
-        // transfer_data: {
-        //   destination: sender.stripeConnectedAccountId,  
-        // },
-        //   },  
-        //   {
-        //     stripeAccount:config.STRIPE_ACCOUNT_ID
-        //   });  
-        //   console.log(paymentIntent)
+        
         const newShipping = await prisma.order.create({
             data: {
                  productId,

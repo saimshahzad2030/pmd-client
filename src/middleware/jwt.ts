@@ -111,7 +111,6 @@ const jwtConfig = {
         res.status(401).json({ message: "You are not authorized" });
       }
     } catch (error) {
-      // console.log(err);
       res.status(520).send(error);
     }
   },
@@ -136,7 +135,6 @@ const jwtConfig = {
           if (err) {
             res.status(401).json({ message: "You are not authorized" });
           } else {
-            // req.user = decoded as JwtPayload | object;
 
             const user = await prisma.user.findFirst({
               where: {

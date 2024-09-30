@@ -19,7 +19,7 @@ const sendEmail = (userEmail, subject, message) => __awaiter(void 0, void 0, voi
         service: "gmail",
         auth: {
             user: "saimshehzad2040@gmail.com",
-            pass: "grtd dmvh rjdw vlbo",
+            pass: "fdzo hgag vbrj wxxp",
         },
     });
     const mailOptions = {
