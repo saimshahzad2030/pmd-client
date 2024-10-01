@@ -132,7 +132,7 @@ import {  placeOrderType } from '../types/req';
             console.log('IPv4 Address:', ipv4Address);
             if(config.PLAID_ENV == 'sandbox'){
               paymentIntent = await stripe.paymentIntents.create({
-            amount:10000,
+            amount:price*100,
             currency: 'usd',
             payment_method_types: ['card'],
         payment_method: 'pm_card_visa', 
@@ -148,7 +148,7 @@ import {  placeOrderType } from '../types/req';
             else{
 
               paymentIntent = await stripe.paymentIntents.create({
-                amount: price,
+                amount: price*100,
                 currency: 'usd',
                 payment_method_types: ['us_bank_account'],  
                 payment_method: paymentMethodUser.id,
@@ -174,7 +174,7 @@ import {  placeOrderType } from '../types/req';
           } else if (userIP === '::1') { 
             if(config.PLAID_ENV == 'sandbox'){
               paymentIntent = await stripe.paymentIntents.create({
-            amount:10000,
+            amount:price*100,
             currency: 'usd',
             payment_method_types: ['card'],
         payment_method: 'pm_card_visa', 
@@ -189,7 +189,7 @@ import {  placeOrderType } from '../types/req';
             } 
            else{
             paymentIntent = await stripe.paymentIntents.create({
-              amount: price,
+              amount: price*100,
 
             currency: 'usd',
             payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
@@ -228,7 +228,7 @@ import {  placeOrderType } from '../types/req';
                 senderId,
                 orderExpectedDate:formattedOrderExpectedDate,
                 orderPlacedDate:formattedOrderPlacedDate,
-                price,
+                price:price*100,
                 quantity,
                 messageForSeller,
                 metalAuthenticaitonService,

@@ -109,7 +109,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 console.log('IPv4 Address:', ipv4Address);
                 if (config_1.default.PLAID_ENV == 'sandbox') {
                     paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                        amount: 10000,
+                        amount: price * 100,
                         currency: 'usd',
                         payment_method_types: ['card'],
                         payment_method: 'pm_card_visa',
@@ -123,7 +123,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
                 else {
                     paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                        amount: price,
+                        amount: price * 100,
                         currency: 'usd',
                         payment_method_types: ['us_bank_account'],
                         payment_method: paymentMethodUser.id,
@@ -148,7 +148,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             else if (userIP === '::1') {
                 if (config_1.default.PLAID_ENV == 'sandbox') {
                     paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                        amount: 10000,
+                        amount: price * 100,
                         currency: 'usd',
                         payment_method_types: ['card'],
                         payment_method: 'pm_card_visa',
@@ -162,7 +162,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 }
                 else {
                     paymentIntent = yield stripe_1.stripe.paymentIntents.create({
-                        amount: price,
+                        amount: price * 100,
                         currency: 'usd',
                         payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
                         payment_method: paymentMethodUser.id,
@@ -199,7 +199,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 senderId,
                 orderExpectedDate: formattedOrderExpectedDate,
                 orderPlacedDate: formattedOrderPlacedDate,
-                price,
+                price: price * 100,
                 quantity,
                 messageForSeller,
                 metalAuthenticaitonService,
