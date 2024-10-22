@@ -29,6 +29,11 @@ enum PaymentVerified {
   FALSE
 }
 
+enum AccountMode {
+  BUYER
+  SELLER
+}
+
 model User {
   id                             Int                     @id @default(autoincrement())
   firstName                      String
@@ -46,6 +51,7 @@ model User {
   stripeConnectedAccountId       String?                 @unique
   plaidAccessToken               String?                 @unique
   plaidIdVerificationAccessToken String?                 @unique
+  accountMode                    AccountMode             @default(BUYER)
   buyerPaymentMethodVerified     PaymentVerified         @default(FALSE)
   notifications                  ShippingNotifications[]
   favourites                     Favourites[]
