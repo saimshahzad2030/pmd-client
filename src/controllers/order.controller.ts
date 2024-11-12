@@ -61,6 +61,7 @@ import {  placeOrderType } from '../types/req';
             
             return res.status(400).json({ message: "senderId required" });
           } 
+          console.log('we are here')
     const sender = await prisma.user.findFirst({
       where:{
         id:senderId,
@@ -85,6 +86,7 @@ import {  placeOrderType } from '../types/req';
           }
           
           const access_token = reciever.plaidAccessToken
+          console.log('access_token',access_token)
           const response = await client.authGet({
             access_token
           });
@@ -93,10 +95,8 @@ import {  placeOrderType } from '../types/req';
           account_number: account.account,
           routing_number: account.routing,
           wire_routing: account.wire_routing,
-        }));
-        console.log('account numbers: ',accountNumbers)
-        // console.log(response.data.item.institution_id)
-        const accountDetails = response.data.accounts;  // This will give you the bank account details
+        })); 
+        const accountDetails = response.data.accounts;   
     
         const institutions = await client.institutionsGetById({
           institution_id: response.data.item.institution_id,
@@ -192,14 +192,14 @@ import {  placeOrderType } from '../types/req';
               amount: price*100,
 
             currency: 'usd',
-            payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+            payment_method_types: ['us_bank_account'], 
             payment_method: paymentMethodUser.id,
             mandate_data: {
               customer_acceptance: {
                 type: 'online',
                 online: {
-                  ip_address: '127.0.0.1', // Replace with the actual customer's IP address
-                  user_agent: userAgent, // Replace with the actual user's browser user agent
+                  ip_address: '127.0.0.1', 
+                  user_agent: userAgent, 
                 },
               },
             },
@@ -259,10 +259,11 @@ import {  placeOrderType } from '../types/req';
             // return res.json({ account_details: accountDetails, accountNumbers, paymentIntent });
 
         res.status(201).json({ message: "Order placed successfully",newShipping,clientSecret: paymentIntent});
+        // res.status(201).json({ message: "Order placed successfully" });
         
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+        res.status(500).json({ error: `Internal Server Error: ${error}` });
     }
 };
 

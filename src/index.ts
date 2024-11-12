@@ -49,48 +49,49 @@ const port = process.env.PORT || 3000;
 app.get('/', async (req: Request, res: Response) => {
   try {
 
-    const products = await prisma.products.findMany({
-      include: {
-        images: true,
-        Specifications: true,
-        productHighlights: true,
-        videos: true,
-        favourites: true,
-        cart: true
-      }
-    })
-    const users = await prisma.user.findMany({
-      include: {
-        favourites: {
-          include: {
-            product: true
-          }
-        },
-        creditCards: true,
-        bankAccounts: true,
-        digitalWallets: true,
-        products: true,
-        addresses: true,
-        notifications: true,
-        cart: {
-          include: {
-            product: true
-          }
-        },
-        recieverOrders: {
-          include: {
-            Shippings: true
-          }
-        },
-        senderOrders: {
-          include: {
-            Shippings: true
-          }
-        }
-      },
-    });
+    // const products = await prisma.products.findMany({
+    //   include: {
+    //     images: true,
+    //     Specifications: true,
+    //     productHighlights: true,
+    //     videos: true,
+    //     favourites: true,
+    //     cart: true
+    //   }
+    // })
+    // const users = await prisma.user.findMany({
+    //   include: {
+    //     favourites: {
+    //       include: {
+    //         product: true
+    //       }
+    //     },
+    //     creditCards: true,
+    //     bankAccounts: true,
+    //     digitalWallets: true,
+    //     products: true,
+    //     addresses: true,
+    //     notifications: true,
+    //     cart: {
+    //       include: {
+    //         product: true
+    //       }
+    //     },
+    //     recieverOrders: {
+    //       include: {
+    //         Shippings: true
+    //       }
+    //     },
+    //     senderOrders: {
+    //       include: {
+    //         Shippings: true
+    //       }
+    //     }
+    //   },
+    // });
+    res.status(200).json({ message: 'Products fetched' })
 
-    res.status(200).json({ message: 'Products fetched', products: serializeBigInt(users) })
+    // res.status(200).json({ message: 'Products fetched', products: serializeBigInt(users) })
     // res.json({ users: serializeBigInt(users), message: 'Fetched successfully' });
   } catch (error) {
     res.status(500).json({ error: error });
