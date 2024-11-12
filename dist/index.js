@@ -29,7 +29,6 @@ const query_routes_1 = __importDefault(require("./routes/query.routes"));
 const plaid_routes_1 = __importDefault(require("./routes/plaid.routes"));
 const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
-const seialize_bigint_1 = require("./utils/seialize-bigint");
 const plaid_1 = require("./plaid/plaid");
 const stripe_1 = require("./stripe/stripe");
 const plaid_2 = require("plaid");
@@ -58,47 +57,48 @@ app.use('/api', plaid_routes_1.default);
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const products = yield db_1.default.products.findMany({
-            include: {
-                images: true,
-                Specifications: true,
-                productHighlights: true,
-                videos: true,
-                favourites: true,
-                cart: true
-            }
-        });
-        const users = yield db_1.default.user.findMany({
-            include: {
-                favourites: {
-                    include: {
-                        product: true
-                    }
-                },
-                creditCards: true,
-                bankAccounts: true,
-                digitalWallets: true,
-                products: true,
-                addresses: true,
-                notifications: true,
-                cart: {
-                    include: {
-                        product: true
-                    }
-                },
-                recieverOrders: {
-                    include: {
-                        Shippings: true
-                    }
-                },
-                senderOrders: {
-                    include: {
-                        Shippings: true
-                    }
-                }
-            },
-        });
-        res.status(200).json({ message: 'Products fetched', products: (0, seialize_bigint_1.serializeBigInt)(users) });
+        // const products = await prisma.products.findMany({
+        //   include: {
+        //     images: true,
+        //     Specifications: true,
+        //     productHighlights: true,
+        //     videos: true,
+        //     favourites: true,
+        //     cart: true
+        //   }
+        // })
+        // const users = await prisma.user.findMany({
+        //   include: {
+        //     favourites: {
+        //       include: {
+        //         product: true
+        //       }
+        //     },
+        //     creditCards: true,
+        //     bankAccounts: true,
+        //     digitalWallets: true,
+        //     products: true,
+        //     addresses: true,
+        //     notifications: true,
+        //     cart: {
+        //       include: {
+        //         product: true
+        //       }
+        //     },
+        //     recieverOrders: {
+        //       include: {
+        //         Shippings: true
+        //       }
+        //     },
+        //     senderOrders: {
+        //       include: {
+        //         Shippings: true
+        //       }
+        //     }
+        //   },
+        // });
+        res.status(200).json({ message: 'Products fetched' });
+        // res.status(200).json({ message: 'Products fetched', products: serializeBigInt(users) })
         // res.json({ users: serializeBigInt(users), message: 'Fetched successfully' });
     }
     catch (error) {

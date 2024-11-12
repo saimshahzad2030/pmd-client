@@ -201,9 +201,9 @@ const fetchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const products = yield db_1.default.products.findMany({
             include: {
                 images: true,
-                Specifications: true,
-                productHighlights: true,
-                videos: true,
+                // Specifications: true,
+                // productHighlights: true,
+                // videos: true,
                 favourites: true,
                 cart: true
             }

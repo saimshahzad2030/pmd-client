@@ -49,6 +49,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (!senderId) {
             return res.status(400).json({ message: "senderId required" });
         }
+        console.log('we are here');
         const sender = yield db_1.default.user.findFirst({
             where: {
                 id: senderId,
@@ -68,6 +69,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             userIP = userIP[0];
         }
         const access_token = reciever.plaidAccessToken;
+        console.log('access_token', access_token);
         const response = yield plaid_1.client.authGet({
             access_token
         });
@@ -77,9 +79,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             routing_number: account.routing,
             wire_routing: account.wire_routing,
         }));
-        console.log('account numbers: ', accountNumbers);
-        // console.log(response.data.item.institution_id)
-        const accountDetails = response.data.accounts; // This will give you the bank account details
+        const accountDetails = response.data.accounts;
         const institutions = yield plaid_1.client.institutionsGetById({
             institution_id: response.data.item.institution_id,
             country_codes: [plaid_2.CountryCode.Us],
@@ -164,14 +164,14 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     paymentIntent = yield stripe_1.stripe.paymentIntents.create({
                         amount: price * 100,
                         currency: 'usd',
-                        payment_method_types: ['us_bank_account'], // Use 'us_bank_account' for bank accounts
+                        payment_method_types: ['us_bank_account'],
                         payment_method: paymentMethodUser.id,
                         mandate_data: {
                             customer_acceptance: {
                                 type: 'online',
                                 online: {
-                                    ip_address: '127.0.0.1', // Replace with the actual customer's IP address
-                                    user_agent: userAgent, // Replace with the actual user's browser user agent
+                                    ip_address: '127.0.0.1',
+                                    user_agent: userAgent,
                                 },
                             },
                         },
@@ -227,10 +227,11 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
         // return res.json({ account_details: accountDetails, accountNumbers, paymentIntent });
         res.status(201).json({ message: "Order placed successfully", newShipping, clientSecret: paymentIntent });
+        // res.status(201).json({ message: "Order placed successfully" });
     }
     catch (error) {
         console.log(error);
-        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+        res.status(500).json({ error: `Internal Server Error: ${error}` });
     }
 });
 exports.addNewOrder = addNewOrder;
