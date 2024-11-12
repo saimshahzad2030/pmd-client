@@ -233,7 +233,7 @@ import {  placeOrderType } from '../types/req';
                 messageForSeller,
                 metalAuthenticaitonService,
                 paymentMethod,
-                paymentIntentId:paymentIntent?.id || '2',
+                paymentIntentId:paymentIntent?.id,
                 Shippings:{
                     create:{
                         cost:shippingCost,
