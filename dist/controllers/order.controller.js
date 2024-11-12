@@ -204,7 +204,7 @@ const addNewOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 messageForSeller,
                 metalAuthenticaitonService,
                 paymentMethod,
-                paymentIntentId: paymentIntent.id,
+                paymentIntentId: (paymentIntent === null || paymentIntent === void 0 ? void 0 : paymentIntent.id) || '2',
                 Shippings: {
                     create: {
                         cost: shippingCost,

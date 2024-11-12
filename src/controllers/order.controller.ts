@@ -132,14 +132,14 @@ import {  placeOrderType } from '../types/req';
             console.log('IPv4 Address:', ipv4Address);
             if(config.PLAID_ENV == 'sandbox'){
               paymentIntent = await stripe.paymentIntents.create({
-            amount:price*100,
-            currency: 'usd',
-            payment_method_types: ['card'],
-        payment_method: 'pm_card_visa', 
-        confirm:true,
-        transfer_data: {
-          destination: sender.stripeConnectedAccountId,  
-        },
+              amount:price*100,
+              currency: 'usd',
+              payment_method_types: ['card'],
+              payment_method: 'pm_card_visa', 
+              confirm:true,
+              transfer_data: {
+                destination: sender.stripeConnectedAccountId,  
+                              },
           },  
           {
             stripeAccount:config.STRIPE_ACCOUNT_ID
@@ -233,7 +233,7 @@ import {  placeOrderType } from '../types/req';
                 messageForSeller,
                 metalAuthenticaitonService,
                 paymentMethod,
-                paymentIntentId:paymentIntent.id,
+                paymentIntentId:paymentIntent?.id || '2',
                 Shippings:{
                     create:{
                         cost:shippingCost,
