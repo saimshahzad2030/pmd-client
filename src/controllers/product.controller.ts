@@ -255,6 +255,12 @@ export const fetchSpecificProducts = async (req: Request, res: Response) => {
         }
         const startIndex = Number(start);
         const endIndex = Number(end);
+        const totalProducts = await prisma.products.count({
+            where: {
+                metalType: typeOfMetal as MetalType,
+            },
+        });
+        const totalPages = Math.ceil(totalProducts / 24)
         const products = await prisma.products.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
@@ -270,7 +276,7 @@ export const fetchSpecificProducts = async (req: Request, res: Response) => {
                 favourites: true
             }
         })
-        res.status(200).json({ message: 'Produst fetched', products })
+        res.status(200).json({ message: 'Product fetched', products, totalPages })
     } catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
     }
