@@ -229,6 +229,12 @@ const fetchSpecificProducts = (req, res) => __awaiter(void 0, void 0, void 0, fu
         }
         const startIndex = Number(start);
         const endIndex = Number(end);
+        const totalProducts = yield db_1.default.products.count({
+            where: {
+                metalType: typeOfMetal,
+            },
+        });
+        const totalPages = Math.ceil(totalProducts / 24);
         const products = yield db_1.default.products.findMany({
             skip: startIndex,
             take: endIndex - startIndex,
@@ -243,7 +249,7 @@ const fetchSpecificProducts = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 favourites: true
             }
         });
-        res.status(200).json({ message: 'Produst fetched', products });
+        res.status(200).json({ message: 'Product fetched', products, totalPages });
     }
     catch (error) {
         res.status(500).json({ error: `Internal Server Error: ${error.message}` });
